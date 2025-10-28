@@ -1,0 +1,123 @@
+[
+  {
+    "id": "item-001",
+    "date": "2024-01-15",
+    "name": "Золотое кольцо с бриллиантом",
+    "weight": 4.5,
+    "article": "RING-DI-001",
+    "purchasePrice": 25000,
+    "sellingPrice": 45000,
+    "status": "sold",
+    "paymentType": "cash",
+    "saleDate": "2024-02-20"
+  },
+  {
+    "id": "item-002",
+    "date": "2024-01-20",
+    "name": "Серебряная цепочка",
+    "weight": 12.3,
+    "article": "CHAIN-SL-002",
+    "purchasePrice": 8000,
+    "sellingPrice": 15000,
+    "status": "in-stock",
+    "paymentType": null,
+    "saleDate": null
+  },
+  {
+    "id": "item-003",
+    "date": "2024-02-01",
+    "name": "Золотые серьги",
+    "weight": 3.2,
+    "article": "EARR-GD-003",
+    "purchasePrice": 18000,
+    "sellingPrice": 32000,
+    "status": "sold",
+    "paymentType": "cashless",
+    "saleDate": "2024-02-25"
+  },
+  {
+    "id": "item-004",
+    "date": "2024-02-10",
+    "name": "Браслет из белого золота",
+    "weight": 15.8,
+    "article": "BRAC-WG-004",
+    "purchasePrice": 35000,
+    "sellingPrice": 65000,
+    "status": "in-stock",
+    "paymentType": null,
+    "saleDate": null
+  },
+  {
+    "id": "item-005",
+    "date": "2024-02-15",
+    "name": "Кольцо обручальное золотое",
+    "weight": 5.0,
+    "article": "RING-ENG-005",
+    "purchasePrice": 12000,
+    "sellingPrice": 22000,
+    "status": "sold",
+    "paymentType": "cash",
+    "saleDate": "2024-03-01"
+  },
+  {
+    "id": "item-006",
+    "date": "2024-03-01",
+    "name": "Подвеска с изумрудом",
+    "weight": 6.5,
+    "article": "PEND-EM-006",
+    "purchasePrice": 22000,
+    "sellingPrice": 42000,
+    "status": "sold",
+    "paymentType": "cashless",
+    "saleDate": "2024-03-15"
+  },
+  {
+    "id": "item-007",
+    "date": "2024-03-05",
+    "name": "Золотые часы",
+    "weight": 45.2,
+    "article": "WATC-GD-007",
+    "purchasePrice": 85000,
+    "sellingPrice": 165000,
+    "status": "in-stock",
+    "paymentType": null,
+    "saleDate": null
+  },
+  {
+    "id": "item-008",
+    "date": "2024-03-10",
+    "name": "Серьги из платины",
+    "weight": 4.8,
+    "article": "EARR-PT-008",
+    "purchasePrice": 45000,
+    "sellingPrice": 85000,
+    "status": "in-stock",
+    "paymentType": null,
+    "saleDate": null
+  },
+  {
+    "id": "item-009",
+    "date": "2024-03-15",
+    "name": "Цепочка золотая тонкая",
+    "weight": 8.3,
+    "article": "CHAIN-GD-009",
+    "purchasePrice": 15000,
+    "sellingPrice": 28000,
+    "status": "sold",
+    "paymentType": "cash",
+    "saleDate": "2024-03-20"
+  },
+  {
+    "id": "item-010",
+    "date": "2024-03-20",
+    "name": "Кольцо с рубином",
+    "weight": 5.5,
+    "article": "RING-RB-010",
+    "purchasePrice": 28000,
+    "sellingPrice": 52000,
+    "status": "in-stock",
+    "paymentType": null,
+    "saleDate": null
+  }
+]
+

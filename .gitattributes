@@ -1,0 +1,16 @@
+# GitHub Language Detection
+*.js linguist-language=JavaScript
+*.html linguist-language=HTML
+*.css linguist-language=CSS
+*.json linguist-language=JSON
+
+# Normalize line endings
+* text=auto
+
+# Prevent CRLF issues
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+
