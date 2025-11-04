@@ -728,7 +728,15 @@ class JewelryApp {
                 document.getElementById('product-purchase-price').value = product.purchasePrice;
                 document.getElementById('product-selling-price').value = product.sellingPrice;
                 document.getElementById('product-status').value = product.status;
-                document.getElementById('product-payment-type').value = product.paymentType || 'cash';
+                // Устанавливаем тип оплаты с проверкой на поддерживаемые значения
+                const paymentTypeSelect = document.getElementById('product-payment-type');
+                const validPaymentTypes = ['cash', 'cashless', 'installment'];
+                const paymentType = product.paymentType && validPaymentTypes.includes(product.paymentType) 
+                    ? product.paymentType 
+                    : 'cash';
+                if (paymentTypeSelect) {
+                    paymentTypeSelect.value = paymentType;
+                }
                 document.getElementById('product-sale-date').value = product.saleDate || '';
                 
                 // Новые поля
