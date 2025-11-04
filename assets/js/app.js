@@ -535,13 +535,23 @@ class JewelryApp {
             return;
         }
 
+        console.log(`🔄 Ручная синхронизация:`);
+        console.log(`  - Товаров в памяти: ${this.products.length}`);
+        console.log(`  - Товары:`, this.products);
+        
         // Уведомления отключены
         // this.showSyncNotification('🔄 Синхронизация...', 'info');
         
-        // First sync to GitHub (upload)
-        await this.syncToGitHub();
+        // First sync to GitHub (upload) - только если есть данные
+        if (this.products && this.products.length > 0) {
+            console.log(`📤 Отправка ${this.products.length} товаров на GitHub...`);
+            await this.syncToGitHub();
+        } else {
+            console.log(`⚠️ Нет данных для отправки, пропускаю upload`);
+        }
         
         // Then sync from GitHub (download)
+        console.log(`📥 Загрузка данных с GitHub...`);
         await this.syncFromGitHub();
         
         this.renderProducts();
