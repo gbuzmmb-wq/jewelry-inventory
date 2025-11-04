@@ -248,25 +248,29 @@ class JewelryApp {
             const file = gist.files[filename];
 
             if (file && file.content) {
+                console.log(`📥 Получены данные с GitHub, размер: ${file.content.length} символов`);
+                console.log(`📥 Первые 200 символов: ${file.content.substring(0, 200)}`);
+                
                 const remoteData = JSON.parse(file.content);
                 
                 // Smart merge: use remote data if it's newer or has more items
                 if (remoteData && Array.isArray(remoteData)) {
-                    const localData = this.products;
+                    const localData = this.products || [];
                     
-                    const localCount = localData ? localData.length : 0;
+                    const localCount = localData.length;
                     const remoteCount = remoteData.length;
                     
                     console.log(`Sync: Local=${localCount}, Remote=${remoteCount}`);
                     
                     // If remote is empty AND local has data, keep local (don't overwrite)
                     if (remoteCount === 0 && localCount > 0) {
-                        console.log('Remote is empty but local has data, keeping local');
+                        console.log('⚠️ Remote is empty but local has data, keeping local');
                         return false; // Don't update, keep local
                     }
                     
-                    // If remote has data, merge intelligently
+                    // If remote has data, use it (even if local is empty)
                     if (remoteCount > 0) {
+                        console.log(`✅ Remote has ${remoteCount} items, loading...`);
                         // Create maps for efficient lookup
                         const localMap = localData ? new Map() : null;
                         if (localMap && localData) {
