@@ -14,17 +14,14 @@ class JewelryApp {
         this.init();
     }
 
-    init() {
+    async init() {
         this.loadSyncSettings();
-        this.loadData();
+        await this.loadData(); // Wait for data to load
         this.setupEventListeners();
-        this.renderProducts();
-        this.updateStatistics();
         this.initTabs();
         this.initCharts();
         this.setupModalListeners();
         this.setupTableSorting();
-        this.checkSyncOnLoad();
     }
 
     // Load sync settings
@@ -71,17 +68,22 @@ class JewelryApp {
             }));
         }
 
-        // If sync is enabled, try to load from GitHub
-        if (this.syncEnabled && this.githubToken) {
-            await this.syncFromGitHub();
+        // Render immediately with local data
+        this.renderProducts();
+        this.updateStatistics();
+
+        // If sync is enabled, try to load from GitHub in background (non-blocking)
+        if (this.syncEnabled && this.githubToken && this.gistId) {
+            // Wait a bit for UI to render first
+            setTimeout(async () => {
+                await this.syncFromGitHub(true); // true = silent mode (no notification on load)
+            }, 500);
         }
     }
 
     // Check sync on page load
     async checkSyncOnLoad() {
-        if (this.syncEnabled && this.githubToken) {
-            await this.syncFromGitHub();
-        }
+        // This is now handled in loadData
     }
 
     // Save data to localStorage and optionally to GitHub
@@ -153,7 +155,7 @@ class JewelryApp {
     }
 
     // Sync from GitHub Gist
-    async syncFromGitHub() {
+    async syncFromGitHub(silent = false) {
         if (!this.githubToken || !this.gistId) {
             return false;
         }
@@ -167,6 +169,12 @@ class JewelryApp {
             });
 
             if (!response.ok) {
+                if (response.status === 404) {
+                    // Gist not found, create new one on next save
+                    this.gistId = null;
+                    localStorage.removeItem('gistId');
+                    return false;
+                }
                 throw new Error(`GitHub API error: ${response.status}`);
             }
 
@@ -177,26 +185,52 @@ class JewelryApp {
             if (file && file.content) {
                 const remoteData = JSON.parse(file.content);
                 
-                // Merge with local data (remote takes priority)
-                if (remoteData && Array.isArray(remoteData) && remoteData.length > 0) {
-                    this.products = remoteData.map(item => ({
-                        ...item,
-                        date: item.date || new Date().toISOString().split('T')[0],
-                        saleDate: item.saleDate || null
-                    }));
+                // Smart merge: use remote data if it's newer or has more items
+                if (remoteData && Array.isArray(remoteData)) {
+                    const localData = this.products;
+                    
+                    // If remote has data, merge intelligently
+                    if (remoteData.length > 0) {
+                        // Create a map of remote items by ID
+                        const remoteMap = new Map();
+                        remoteData.forEach(item => {
+                            remoteMap.set(item.id, item);
+                        });
+                        
+                        // Merge: remote takes priority, but keep local items not in remote
+                        const merged = [...remoteData];
+                        localData.forEach(localItem => {
+                            if (!remoteMap.has(localItem.id)) {
+                                // Local item not in remote, add it
+                                merged.push(localItem);
+                            }
+                        });
+                        
+                        this.products = merged.map(item => ({
+                            ...item,
+                            date: item.date || new Date().toISOString().split('T')[0],
+                            saleDate: item.saleDate || null
+                        }));
+                    }
+                    // If remote is empty, keep local data
                     
                     // Save merged data to localStorage
                     localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
                     
                     this.renderProducts();
                     this.updateStatistics();
-                    this.showSyncNotification('✅ Данные загружены с GitHub', 'success');
+                    
+                    if (!silent) {
+                        this.showSyncNotification('✅ Данные загружены с GitHub', 'success');
+                    }
                     return true;
                 }
             }
         } catch (error) {
             console.error('Sync from GitHub error:', error);
-            // Don't show error on load, only on manual sync
+            if (!silent) {
+                this.showSyncNotification('❌ Ошибка загрузки: ' + error.message, 'danger');
+            }
             return false;
         }
     }
