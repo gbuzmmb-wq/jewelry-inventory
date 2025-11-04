@@ -1008,6 +1008,7 @@ class JewelryApp {
             const isReturned = product.isReturn === true;
             const isCashSale = isSold && product.paymentType === 'cash';
             const isCardSale = isSold && product.paymentType === 'cashless';
+            const isInstallmentSale = isSold && product.paymentType === 'installment';
 
             return `
                 <tr data-id="${product.id}">
@@ -1023,6 +1024,9 @@ class JewelryApp {
                     </td>
                     <td class="text-center">
                         ${isCardSale ? '<i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>' : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-center">
+                        ${isInstallmentSale ? '<i class="bi bi-check-circle-fill text-warning" style="font-size: 1.5rem;"></i>' : '<span class="text-muted">-</span>'}
                     </td>
                     <td class="text-center">
                         ${product.shipmentDate ? `<small>${this.formatDate(product.shipmentDate)}</small><br><strong>${product.shipmentAmount > 0 ? product.shipmentAmount.toFixed(2) + ' ₽' : '-'}</strong>` : '<span class="text-muted">-</span>'}

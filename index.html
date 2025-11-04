@@ -223,6 +223,7 @@
                                 <th>Продажная цена</th>
                                 <th>Продажа за наличку</th>
                                 <th>Продажа на карту</th>
+                                <th>Продажа в рассрочку</th>
                                 <th>Отправка</th>
                                 <th>Расходы</th>
                                 <th>Возврат</th>
@@ -302,7 +303,7 @@
                 </div>
                 <div class="modal-body text-center">
                     <p class="mb-4">Как была оплачена продажа?</p>
-                    <div class="d-flex gap-3 justify-content-center">
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
                         <button class="btn btn-success btn-lg p-4" onclick="confirmPaymentType('cash')">
                             <i class="bi bi-cash-stack display-4 d-block mb-2"></i>
                             <strong>Наличные</strong>
@@ -310,6 +311,10 @@
                         <button class="btn btn-primary btn-lg p-4" onclick="confirmPaymentType('cashless')">
                             <i class="bi bi-credit-card display-4 d-block mb-2"></i>
                             <strong>Карта</strong>
+                        </button>
+                        <button class="btn btn-warning btn-lg p-4" onclick="confirmPaymentType('installment')">
+                            <i class="bi bi-calendar-check display-4 d-block mb-2"></i>
+                            <strong>Рассрочка</strong>
                         </button>
                     </div>
                 </div>
@@ -395,6 +400,7 @@
                             <select class="form-select" id="product-payment-type">
                                 <option value="cash">Наличные</option>
                                 <option value="cashless">Безналичные</option>
+                                <option value="installment">Рассрочка</option>
                             </select>
                         </div>
                         <div class="mb-3" id="sale-date-container" style="display: none;">
