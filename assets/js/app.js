@@ -6,17 +6,12 @@ class JewelryApp {
         this.products = [];
         this.currentEditId = null;
         this.charts = {};
-        this.currentUser = null;
-        this.credentials = {
-            'admin': { password: 'admin', role: 'admin', name: 'Администратор' },
-            'seller': { password: 'seller', role: 'seller', name: 'Продавец' }
-        };
+        this.pendingSaleId = null; // Store product ID waiting for payment type
+        this.pendingConfirmAction = null; // Store function to execute on confirm
         this.init();
     }
 
     init() {
-        this.checkAuth();
-        this.setupAuthListeners();
         this.loadData();
         this.setupEventListeners();
         this.renderProducts();
@@ -25,134 +20,6 @@ class JewelryApp {
         this.initCharts();
         this.setupModalListeners();
         this.setupTableSorting();
-    }
-
-    // Check authentication
-    checkAuth() {
-        const userData = sessionStorage.getItem('currentUser');
-        if (userData) {
-            this.currentUser = JSON.parse(userData);
-            this.updateUI();
-            return;
-        }
-        // Show auth modal
-        this.showAuthModal();
-    }
-
-    // Show auth modal
-    showAuthModal() {
-        const modal = new bootstrap.Modal(document.getElementById('authModal'), {
-            backdrop: 'static',
-            keyboard: false
-        });
-        modal.show();
-    }
-
-    // Setup auth listeners
-    setupAuthListeners() {
-        document.getElementById('authForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.login();
-        });
-    }
-
-    // Login
-    login() {
-        const username = document.getElementById('auth-username').value;
-        const password = document.getElementById('auth-password').value;
-
-        if (this.credentials[username] && this.credentials[username].password === password) {
-            this.currentUser = {
-                username: username,
-                role: this.credentials[username].role,
-                name: this.credentials[username].name
-            };
-
-            sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('authModal'));
-            modal.hide();
-
-            this.updateUI();
-            this.renderProducts();
-
-            // Show success message
-            setTimeout(() => {
-                alert(`Добро пожаловать, ${this.currentUser.name}!`);
-            }, 100);
-        } else {
-            alert('Неверный логин или пароль!');
-        }
-    }
-
-    // Logout
-    logout() {
-        if (confirm('Вы уверены, что хотите выйти?')) {
-            sessionStorage.removeItem('currentUser');
-            this.currentUser = null;
-            this.showAuthModal();
-            this.renderProducts();
-        }
-    }
-
-    // Update UI based on user role
-    updateUI() {
-        if (!this.currentUser) return;
-
-        document.getElementById('current-user-name').textContent = this.currentUser.name;
-        document.getElementById('dropdown-username').textContent = this.currentUser.username;
-
-        const roleBadge = document.getElementById('user-role-badge');
-        const dropdownRole = document.getElementById('dropdown-role');
-
-        if (this.currentUser.role === 'admin') {
-            roleBadge.textContent = 'Админ';
-            roleBadge.className = 'badge ms-2 bg-danger';
-            dropdownRole.textContent = 'Администратор';
-            dropdownRole.className = 'badge bg-danger';
-        } else {
-            roleBadge.textContent = 'Продавец';
-            roleBadge.className = 'badge ms-2 bg-info';
-            dropdownRole.textContent = 'Продавец';
-            dropdownRole.className = 'badge bg-info';
-        }
-
-        // Show/hide controls based on role
-        const addButton = document.querySelector('button[data-bs-toggle="modal"][data-bs-target="#productModal"]');
-        if (addButton) {
-            addButton.style.display = this.currentUser.role === 'admin' ? '' : 'none';
-        }
-
-        const exportButton = document.querySelector('button[onclick="exportData()"]');
-        if (exportButton) {
-            exportButton.style.display = this.currentUser.role === 'admin' ? '' : 'none';
-        }
-
-        const importButton = document.querySelector('button[onclick="document.getElementById(\'import-input\').click()"]');
-        if (importButton) {
-            importButton.style.display = this.currentUser.role === 'admin' ? '' : 'none';
-        }
-
-        const sampleDataButton = document.querySelector('button[onclick="loadSampleData()"]');
-        if (sampleDataButton) {
-            sampleDataButton.style.display = this.currentUser.role === 'admin' ? '' : 'none';
-        }
-
-        const printButton = document.querySelector('button[onclick="printReport()"]');
-        if (printButton) {
-            printButton.style.display = this.currentUser.role === 'admin' ? '' : 'none';
-        }
-    }
-
-    // Check if user is admin
-    isAdmin() {
-        return this.currentUser && this.currentUser.role === 'admin';
-    }
-
-    // Check if user is seller
-    isSeller() {
-        return this.currentUser && this.currentUser.role === 'seller';
     }
 
     // Load data from localStorage
@@ -236,14 +103,26 @@ class JewelryApp {
     // Open product modal
     openProductModal(productId = null) {
         this.currentEditId = productId;
-        const modal = document.getElementById('productModal');
-        const form = document.getElementById('productForm');
+        const modalElement = document.getElementById('productModal');
+
+        if (!modalElement) {
+            console.error('Modal element not found');
+            return;
+        }
+
+        // Check if modal already exists
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
+        }
 
         if (productId) {
             // Edit mode
-            modal.querySelector('.modal-title').textContent = 'Редактировать товар';
             const product = this.products.find(p => p.id === productId);
             if (product) {
+                modalElement.querySelector('.modal-title').textContent = 'Редактировать товар';
+
+                // Fill form immediately
                 document.getElementById('product-id').value = product.id;
                 document.getElementById('product-date').value = product.date;
                 document.getElementById('product-name').value = product.name;
@@ -261,12 +140,18 @@ class JewelryApp {
                     document.getElementById('sale-date-container').style.display = 'block';
                 }
             }
+            modal.show();
         } else {
             // Add mode
-            modal.querySelector('.modal-title').textContent = 'Добавить товар';
-            form.reset();
+            modalElement.querySelector('.modal-title').textContent = 'Добавить товар';
+            document.getElementById('productForm').reset();
             document.getElementById('product-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('product-status').dispatchEvent(new Event('change'));
+            modal.show();
+
+            // Wait for modal to show before triggering change
+            setTimeout(() => {
+                document.getElementById('product-status').dispatchEvent(new Event('change'));
+            }, 100);
         }
     }
 
@@ -318,48 +203,69 @@ class JewelryApp {
 
     // Delete product
     deleteProduct(id) {
-        if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+        // Store action to execute
+        this.pendingConfirmAction = () => {
             this.products = this.products.filter(p => p.id !== id);
             this.saveData();
             this.renderProducts();
             this.updateStatistics();
-        }
+        };
+
+        // Show confirm modal
+        document.getElementById('confirmMessage').textContent = 'Вы уверены, что хотите удалить этот товар?';
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
     }
 
     // Mark as sold
     markAsSold(id) {
-        const product = this.products.find(p => p.id === id);
+        // Store product ID and show payment type modal
+        this.pendingSaleId = id;
+
+        const modalElement = document.getElementById('paymentTypeModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+
+    // Confirm payment type
+    confirmPaymentType(paymentType) {
+        if (!this.pendingSaleId) return;
+
+        const product = this.products.find(p => p.id === this.pendingSaleId);
         if (product) {
             product.status = 'sold';
-            product.saleDate = product.saleDate || new Date().toISOString().split('T')[0];
-            product.paymentType = product.paymentType || 'cash';
-            product.soldBy = this.currentUser.username;
-            product.soldAt = new Date().toISOString();
+            product.saleDate = new Date().toISOString().split('T')[0];
+            product.paymentType = paymentType;
             this.saveData();
             this.renderProducts();
             this.updateStatistics();
         }
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('paymentTypeModal'));
+        modal.hide();
+
+        this.pendingSaleId = null;
     }
 
-    // Revert sold status (admin only)
+    // Revert sold status
     revertSoldStatus(id) {
-        if (!this.isAdmin()) {
-            alert('Только администратор может отменить продажу!');
-            return;
-        }
-
         const product = this.products.find(p => p.id === id);
         if (product && product.status === 'sold') {
-            if (confirm('Вы уверены, что хотите отменить продажу этого товара?')) {
+            // Store action to execute
+            this.pendingConfirmAction = () => {
                 product.status = 'in-stock';
                 product.saleDate = null;
                 product.paymentType = null;
-                delete product.soldBy;
-                delete product.soldAt;
                 this.saveData();
                 this.renderProducts();
                 this.updateStatistics();
-            }
+            };
+
+            // Show confirm modal
+            document.getElementById('confirmMessage').textContent = 'Отменить продажу этого товара?';
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            modal.show();
         }
     }
 
@@ -384,43 +290,44 @@ class JewelryApp {
         }
 
         noProducts.style.display = 'none';
-        tbody.innerHTML = products.map(product => {
+        tbody.innerHTML = products.map((product, index) => {
             const profit = product.sellingPrice - product.purchasePrice;
             const isSold = product.status === 'sold';
-            const statusClass = isSold ? 'status-sold' : 'status-stock';
-            const statusText = isSold ? 'Продано' : 'В наличии';
-            const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
-            const paymentType = product.paymentType === 'cash' ? 'Наличные' : 'Безнал';
+            const isCashSale = isSold && product.paymentType === 'cash';
+            const isCardSale = isSold && product.paymentType === 'cashless';
 
             return `
                 <tr data-id="${product.id}">
+                    <td><strong>${index + 1}</strong></td>
                     <td>${this.formatDate(product.date)}</td>
                     <td><strong>${this.escapeHtml(product.name)}</strong></td>
                     <td data-sort="${product.weight}">${product.weight} гр</td>
                     <td><code>${this.escapeHtml(product.article)}</code></td>
                     <td data-sort="${product.purchasePrice}">${product.purchasePrice.toFixed(2)} ₽</td>
                     <td data-sort="${product.sellingPrice}">${product.sellingPrice.toFixed(2)} ₽</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td class="${profitClass}" data-sort="${profit}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)} ₽</td>
+                    <td class="text-center">
+                        ${isCashSale ? '<i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>' : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-center">
+                        ${isCardSale ? '<i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>' : '<span class="text-muted">-</span>'}
+                    </td>
                     <td class="action-buttons">
                         ${!isSold ? `
                             <button class="btn btn-sm btn-success" onclick="app.markAsSold('${product.id}')" title="Отметить как проданный">
                                 <i class="bi bi-check-circle"></i>
                             </button>
                         ` : ''}
-                        ${this.isAdmin() ? `
-                            ${isSold ? `
-                                <button class="btn btn-sm btn-warning" onclick="app.revertSoldStatus('${product.id}')" title="Отменить продажу">
-                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-sm btn-primary" onclick="app.openProductModal('${product.id}')" title="Редактировать">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="app.deleteProduct('${product.id}')" title="Удалить">
-                                <i class="bi bi-trash"></i>
+                        ${isSold ? `
+                            <button class="btn btn-sm btn-warning" onclick="app.revertSoldStatus('${product.id}')" title="Отменить продажу">
+                                <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         ` : ''}
+                        <button class="btn btn-sm btn-primary" onclick="openProductModal('${product.id}')" title="Редактировать">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="app.deleteProduct('${product.id}')" title="Удалить">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `;
@@ -756,8 +663,8 @@ class JewelryApp {
             if (headers.length === 0) return;
 
             headers.forEach((header, index) => {
-                // Skip action column
-                if (index === headers.length - 1) return;
+                // Skip last column (actions) and columns with icons (payment type columns)
+                if (index === headers.length - 1 || index === 7 || index === 8) return;
 
                 // Remove old event listeners
                 const newHeader = header.cloneNode(true);
@@ -848,7 +755,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global functions for onclick handlers
 function openProductModal(id = null) {
-    app.openProductModal(id);
+    if (app && typeof app.openProductModal === 'function') {
+        app.openProductModal(id);
+    } else {
+        console.error('App not initialized');
+    }
 }
 
 function saveProduct() {
@@ -869,5 +780,20 @@ function loadSampleData() {
 
 function printReport() {
     window.print();
+}
+
+function confirmPaymentType(type) {
+    app.confirmPaymentType(type);
+}
+
+function executeConfirmAction() {
+    if (app.pendingConfirmAction) {
+        app.pendingConfirmAction();
+        app.pendingConfirmAction = null;
+    }
+
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+    modal.hide();
 }
 

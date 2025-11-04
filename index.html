@@ -17,41 +17,6 @@
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body id="app-body">
-    <!-- Auth Modal -->
-    <div class="modal fade" id="authModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content auth-modal">
-                <div class="modal-header auth-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-shield-lock me-2"></i>Авторизация
-                    </h5>
-                </div>
-                <div class="modal-body">
-                    <form id="authForm">
-                        <div class="mb-3">
-                            <label class="form-label">Логин</label>
-                            <input type="text" class="form-control" id="auth-username" required autocomplete="username">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Пароль</label>
-                            <input type="password" class="form-control" id="auth-password" required autocomplete="current-password">
-                        </div>
-                        <div class="alert alert-info">
-                            <strong>Тестовые аккаунты:</strong><br>
-                            Администратор: <code>admin</code> / <code>admin</code><br>
-                            Продавец: <code>seller</code> / <code>seller</code>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Войти
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-gradient">
         <div class="container-fluid">
@@ -73,18 +38,6 @@
                             <i class="bi bi-graph-up me-1"></i>Аналитика
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i><span id="current-user-name">Пользователь</span>
-                            <span class="badge ms-2" id="user-role-badge"></span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item disabled"><i class="bi bi-person me-2"></i><span id="dropdown-username">--</span></a></li>
-                            <li><a class="dropdown-item disabled"><span class="badge bg-secondary" id="dropdown-role">--</span></a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="app.logout()"><i class="bi bi-box-arrow-right me-2"></i>Выйти</a></li>
-                        </ul>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -96,63 +49,55 @@
         <!-- Products Tab -->
         <div id="products-tab" class="tab-content">
             <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted mb-1">Всего товаров</h6>
-                                    <h3 class="mb-0" id="total-products">0</h3>
-                                </div>
-                                <div class="stats-icon bg-primary">
-                                    <i class="bi bi-box-seam"></i>
-                                </div>
+            <div class="row mb-3">
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Всего товаров</h6>
+                                <h3 id="total-products">0</h3>
+                            </div>
+                            <div class="stats-icon bg-primary">
+                                <i class="bi bi-box-seam"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted mb-1">Продано</h6>
-                                    <h3 class="mb-0" id="sold-products">0</h3>
-                                </div>
-                                <div class="stats-icon bg-success">
-                                    <i class="bi bi-check-circle"></i>
-                                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Продано</h6>
+                                <h3 id="sold-products">0</h3>
+                            </div>
+                            <div class="stats-icon bg-success">
+                                <i class="bi bi-check-circle"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted mb-1">Прибыль</h6>
-                                    <h3 class="mb-0" id="total-profit">0 ₽</h3>
-                                </div>
-                                <div class="stats-icon bg-success">
-                                    <i class="bi bi-cash-coin"></i>
-                                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Прибыль</h6>
+                                <h3 id="total-profit">0 ₽</h3>
+                            </div>
+                            <div class="stats-icon bg-success">
+                                <i class="bi bi-cash-coin"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6 mb-3">
-                    <div class="card stats-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="text-muted mb-1">В наличии</h6>
-                                    <h3 class="mb-0" id="in-stock">0</h3>
-                                </div>
-                                <div class="stats-icon bg-warning">
-                                    <i class="bi bi-inbox"></i>
-                                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>В наличии</h6>
+                                <h3 id="in-stock">0</h3>
+                            </div>
+                            <div class="stats-icon bg-warning">
+                                <i class="bi bi-inbox"></i>
                             </div>
                         </div>
                     </div>
@@ -160,33 +105,43 @@
             </div>
 
             <!-- Search and Filters -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <input type="text" class="form-control" id="search-input" placeholder="Поиск по названию или артикулу...">
+            <div class="row mb-2">
+                <div class="col-md-4 col-12 mb-2">
+                    <input type="text" class="form-control" id="search-input" placeholder="Поиск...">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 col-6 mb-2">
                     <select class="form-select" id="status-filter">
                         <option value="all">Все</option>
                         <option value="in-stock">В наличии</option>
                         <option value="sold">Продано</option>
                     </select>
                 </div>
-                <div class="col-md-6 text-end">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openProductModal()">
-                        <i class="bi bi-plus-circle me-1"></i>Добавить товар
-                    </button>
-                    <button class="btn btn-outline-info" onclick="loadSampleData()">
-                        <i class="bi bi-database me-1"></i>Тестовые данные
-                    </button>
-                    <button class="btn btn-outline-success" onclick="document.getElementById('import-input').click()">
-                        <i class="bi bi-upload me-1"></i>Импорт
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="exportData()">
-                        <i class="bi bi-download me-1"></i>Экспорт
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="printReport()">
-                        <i class="bi bi-printer me-1"></i>Печать
-                    </button>
+                <div class="col-md-6 col-12">
+                    <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openProductModal()">
+                            <i class="bi bi-plus-circle me-1"></i><span class="d-none d-md-inline">Добавить товар</span>
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="printReport()">
+                            <i class="bi bi-printer"></i><span class="d-none d-md-inline ms-1">Печать</span>
+                        </button>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary" type="button" id="settingsButton" data-bs-toggle="dropdown">
+                                <i class="bi bi-gear"></i> <span class="d-none d-md-inline ms-1">Настройки</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="document.getElementById('import-input').click()">
+                                    <i class="bi bi-upload me-2"></i>Импорт данных
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportData()">
+                                    <i class="bi bi-download me-2"></i>Экспорт данных
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="loadSampleData()">
+                                    <i class="bi bi-database me-2"></i>Загрузить тестовые данные
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
                     <input type="file" id="import-input" accept=".json" style="display: none;" onchange="importData(event)">
                 </div>
             </div>
@@ -197,14 +152,15 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th>№</th>
                                 <th>Дата</th>
-                                <th>Название</th>
+                                <th>Наименование</th>
                                 <th>Вес</th>
                                 <th>Артикул</th>
-                                <th>Закупка</th>
-                                <th>Продажа</th>
-                                <th>Статус</th>
-                                <th>Прибыль</th>
+                                <th>Приходная цена</th>
+                                <th>Продажная цена</th>
+                                <th>Продажа за наличку</th>
+                                <th>Продажа на карту</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -263,6 +219,58 @@
                         <div class="card-body">
                             <canvas id="topProductsChart"></canvas>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Type Modal -->
+    <div class="modal fade" id="paymentTypeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-cash-coin me-2"></i>Выберите тип оплаты
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-4">Как была оплачена продажа?</p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button class="btn btn-success btn-lg p-4" onclick="confirmPaymentType('cash')">
+                            <i class="bi bi-cash-stack display-4 d-block mb-2"></i>
+                            <strong>Наличные</strong>
+                        </button>
+                        <button class="btn btn-primary btn-lg p-4" onclick="confirmPaymentType('cashless')">
+                            <i class="bi bi-credit-card display-4 d-block mb-2"></i>
+                            <strong>Карта</strong>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Подтверждение
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-4 fs-5" id="confirmMessage">Вы уверены?</p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button class="btn btn-danger btn-lg px-4" id="confirmYesBtn" onclick="executeConfirmAction()">
+                            <i class="bi bi-check-circle me-2"></i>Да
+                        </button>
+                        <button class="btn btn-secondary btn-lg px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-2"></i>Отмена
+                        </button>
                     </div>
                 </div>
             </div>
