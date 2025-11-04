@@ -112,11 +112,18 @@ class JewelryApp {
 
     // Save data to localStorage and optionally to GitHub
     async saveData() {
+        const productsCount = this.products ? this.products.length : 0;
+        console.log(`💾 saveData вызван: ${productsCount} товаров`);
+        
         localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+        console.log(`✅ Данные сохранены в localStorage: ${productsCount} товаров`);
         
         // Auto-sync to GitHub if enabled
         if (this.syncEnabled && this.githubToken) {
+            console.log(`🔄 Синхронизация включена, отправка на GitHub...`);
             await this.syncToGitHub();
+        } else {
+            console.log(`⚠️ Синхронизация выключена или нет токена (syncEnabled=${this.syncEnabled}, hasToken=${!!this.githubToken})`);
         }
     }
 
@@ -128,6 +135,14 @@ class JewelryApp {
         }
 
         try {
+            const productsCount = this.products ? this.products.length : 0;
+            console.log(`📤 Синхронизация на GitHub: ${productsCount} товаров`);
+            
+            if (productsCount === 0) {
+                console.warn('⚠️ Нет данных для синхронизации (products пустой)');
+                // Но все равно отправляем, чтобы обновить gist
+            }
+
             const data = JSON.stringify(this.products, null, 2);
             const filename = 'jewelry-inventory.json';
             
@@ -146,6 +161,8 @@ class JewelryApp {
                 : 'https://api.github.com/gists';
             
             const method = this.gistId ? 'PATCH' : 'POST';
+            
+            console.log(`📤 Отправка на GitHub: ${method} ${url.substring(0, 50)}...`);
 
             const response = await fetch(url, {
                 method: method,
@@ -158,6 +175,8 @@ class JewelryApp {
             });
 
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('GitHub API error:', response.status, errorText);
                 throw new Error(`GitHub API error: ${response.status}`);
             }
 
@@ -167,7 +186,12 @@ class JewelryApp {
             if (!this.gistId && result.id) {
                 this.gistId = result.id;
                 this.saveSyncSettings();
+                console.log(`✅ Gist создан: ${result.id}`);
+            } else if (this.gistId) {
+                console.log(`✅ Gist обновлен: ${this.gistId}`);
             }
+            
+            console.log(`✅ Данные синхронизированы: ${productsCount} товаров на GitHub`);
 
             // Уведомления отключены
             // this.showSyncNotification('✅ Данные синхронизированы с GitHub', 'success');
@@ -597,8 +621,11 @@ class JewelryApp {
         this.updateStatistics();
         
         // Save data (async, in background)
-        this.saveData().catch(err => {
-            console.error('Error saving data:', err);
+        console.log(`💾 Сохранение товара: ${this.products.length} товаров в списке`);
+        this.saveData().then(() => {
+            console.log(`✅ Данные сохранены: ${this.products.length} товаров`);
+        }).catch(err => {
+            console.error('❌ Ошибка сохранения данных:', err);
         });
 
         this.resetForm();
