@@ -1148,7 +1148,13 @@ class JewelryApp {
 
         // Status filter
         if (statusFilter !== 'all') {
-            filtered = filtered.filter(p => p.status === statusFilter);
+            if (statusFilter === 'returned') {
+                filtered = filtered.filter(p => p.isReturn === true);
+            } else if (statusFilter === 'installment') {
+                filtered = filtered.filter(p => p.status === 'sold' && p.paymentType === 'installment');
+            } else {
+                filtered = filtered.filter(p => p.status === statusFilter);
+            }
         }
 
         this.renderProducts(filtered);
