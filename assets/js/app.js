@@ -80,19 +80,34 @@ class JewelryApp {
         // Render immediately with local data (if any)
         this.renderProducts();
         this.updateStatistics();
+        
+        console.log(`📊 Загружено из localStorage: ${this.products.length} товаров`);
 
         // If sync is enabled, try to load from GitHub
         if (this.syncEnabled && this.githubToken) {
             if (this.gistId) {
                 // We have gistId, sync from GitHub
-                // Load immediately, don't wait
-                this.syncFromGitHub(true).then(() => {
-                    // Force re-render after sync
-                    this.renderProducts();
-                    this.updateStatistics();
-                }).catch(err => {
-                    console.error('Sync error on load:', err);
-                });
+                // Only sync if local data is empty OR if we want to merge
+                if (this.products.length === 0) {
+                    console.log('📥 Локальные данные пустые, загружаю с GitHub...');
+                    // Load immediately, don't wait
+                    this.syncFromGitHub(true).then(() => {
+                        // Force re-render after sync
+                        this.renderProducts();
+                        this.updateStatistics();
+                    }).catch(err => {
+                        console.error('Sync error on load:', err);
+                    });
+                } else {
+                    console.log(`📊 Локальные данные есть (${this.products.length} товаров), синхронизация в фоне...`);
+                    // Sync in background to merge, but don't overwrite local data
+                    setTimeout(() => {
+                        this.syncFromGitHub(true).then(() => {
+                            this.renderProducts();
+                            this.updateStatistics();
+                        });
+                    }, 1000);
+                }
             } else {
                 // No gistId yet - if no local data, try to find existing gist
                 // Otherwise, create gist on first save
@@ -610,11 +625,18 @@ class JewelryApp {
             const index = this.products.findIndex(p => p.id === this.currentEditId);
             if (index !== -1) {
                 this.products[index] = productData;
+                console.log(`✏️ Товар обновлен: ${productData.name}`);
+            } else {
+                console.warn(`⚠️ Товар с ID ${this.currentEditId} не найден для обновления`);
             }
         } else {
             // Add new
             this.products.push(productData);
+            console.log(`➕ Товар добавлен: ${productData.name} (ID: ${productData.id})`);
         }
+
+        console.log(`📊 Всего товаров в массиве: ${this.products.length}`);
+        console.log(`📦 Данные товара:`, productData);
 
         // Render immediately (don't wait for save)
         this.renderProducts();
