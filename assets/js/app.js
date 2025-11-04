@@ -95,7 +95,15 @@ class JewelryApp {
         this.renderProducts();
         this.updateStatistics();
         
-        console.log(`📊 Загружено из localStorage: ${this.products.length} товаров`);
+            console.log(`📊 Загружено из localStorage: ${this.products.length} товаров`);
+            
+            // КРИТИЧНО: Рендерим товары сразу после загрузки из localStorage
+            if (this.products.length > 0) {
+                console.log(`🖼️ СРАЗУ после загрузки из localStorage: ${this.products.length} товаров`);
+                console.log(`🖼️ Вызываю renderProducts немедленно...`);
+                this.renderProducts();
+                this.updateStatistics();
+            }
 
         // If sync is enabled, try to load from GitHub
         if (this.syncEnabled && this.githubToken) {
