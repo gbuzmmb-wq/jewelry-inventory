@@ -1430,6 +1430,253 @@ class JewelryApp {
         URL.revokeObjectURL(url);
     }
 
+    // Export to Excel
+    async exportToExcel() {
+        try {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Товары');
+
+            // Заголовок отчета
+            worksheet.mergeCells('A1:L1');
+            const titleCell = worksheet.getCell('A1');
+            titleCell.value = 'Ювелирный учет - Отчет по товарам';
+            titleCell.font = { size: 16, bold: true, color: { argb: 'FF8B6F47' } };
+            titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+            titleCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF5E6D3' }
+            };
+            worksheet.getRow(1).height = 30;
+
+            // Дата отчета
+            worksheet.mergeCells('A2:L2');
+            const dateCell = worksheet.getCell('A2');
+            dateCell.value = `Дата отчета: ${new Date().toLocaleDateString('ru-RU', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            })}`;
+            dateCell.font = { size: 11, italic: true };
+            dateCell.alignment = { horizontal: 'center' };
+            worksheet.getRow(2).height = 20;
+
+            // Статистика
+            const totalProducts = this.products.length;
+            const soldProducts = this.products.filter(p => p.status === 'sold').length;
+            const inStock = totalProducts - soldProducts;
+            const totalProfit = this.products
+                .filter(p => p.status === 'sold')
+                .reduce((sum, p) => {
+                    const profit = p.sellingPrice - p.purchasePrice;
+                    const expenses = p.expenses || 0;
+                    const returnAmount = (p.isReturn && p.returnAmount) ? p.returnAmount : 0;
+                    return sum + profit - expenses - returnAmount;
+                }, 0);
+            const totalExpenses = this.products.reduce((sum, p) => sum + (p.expenses || 0), 0);
+            const totalReturns = this.products.filter(p => p.isReturn === true).length;
+            const totalReturnAmount = this.products
+                .filter(p => p.isReturn === true)
+                .reduce((sum, p) => sum + (p.returnAmount || 0), 0);
+            const installmentCount = this.products.filter(p => p.status === 'sold' && p.paymentType === 'installment').length;
+            const installmentAmount = this.products
+                .filter(p => p.status === 'sold' && p.paymentType === 'installment')
+                .reduce((sum, p) => sum + (p.sellingPrice || 0), 0);
+
+            worksheet.mergeCells('A4:L4');
+            const statsTitle = worksheet.getCell('A4');
+            statsTitle.value = 'Статистика';
+            statsTitle.font = { size: 14, bold: true };
+            statsTitle.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFE8E8E8' }
+            };
+            worksheet.getRow(4).height = 25;
+
+            // Статистические данные
+            const statsData = [
+                ['Всего товаров', totalProducts, 'Продано', soldProducts, 'В наличии', inStock],
+                ['Прибыль', `${totalProfit.toFixed(2)} ₽`, 'Расходы', `${totalExpenses.toFixed(2)} ₽`, 'Возвраты', totalReturns],
+                ['Сумма возвратов', `${totalReturnAmount.toFixed(2)} ₽`, 'Рассрочка (кол-во)', installmentCount, 'Сумма рассрочки', `${installmentAmount.toFixed(2)} ₽`]
+            ];
+
+            statsData.forEach((row, idx) => {
+                const rowNum = 5 + idx;
+                row.forEach((cell, colIdx) => {
+                    const cellRef = worksheet.getCell(rowNum, colIdx * 2 + 1);
+                    cellRef.value = cell;
+                    if (colIdx % 2 === 0) {
+                        cellRef.font = { bold: true };
+                        cellRef.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFF0F0F0' }
+                        };
+                    }
+                });
+            });
+
+            // Пустая строка
+            worksheet.getRow(8).height = 10;
+
+            // Заголовки таблицы
+            const headers = [
+                '№', 'Дата', 'Наименование', 'Вес (гр)', 'Артикул',
+                'Приходная цена', 'Продажная цена', 'Статус',
+                'Тип оплаты', 'Дата продажи', 'Отправка', 'Расходы',
+                'Возврат', 'Сумма возврата', 'Рассрочка'
+            ];
+
+            const headerRow = worksheet.getRow(9);
+            headers.forEach((header, idx) => {
+                const cell = headerRow.getCell(idx + 1);
+                cell.value = header;
+                cell.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF8B6F47' }
+                };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+            headerRow.height = 30;
+
+            // Данные товаров
+            this.products.forEach((product, index) => {
+                const row = worksheet.getRow(10 + index);
+                
+                const getPaymentType = (type) => {
+                    if (!type) return '-';
+                    const types = {
+                        'cash': 'Наличные',
+                        'cashless': 'Безналичные',
+                        'installment': 'Рассрочка'
+                    };
+                    return types[type] || type;
+                };
+
+                const getStatus = (status) => {
+                    return status === 'sold' ? 'Продано' : 'В наличии';
+                };
+
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '-';
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('ru-RU');
+                };
+
+                row.getCell(1).value = index + 1;
+                row.getCell(2).value = formatDate(product.date);
+                row.getCell(3).value = product.name;
+                row.getCell(4).value = product.weight;
+                row.getCell(5).value = product.article;
+                row.getCell(6).value = product.purchasePrice;
+                row.getCell(7).value = product.sellingPrice;
+                row.getCell(8).value = getStatus(product.status);
+                row.getCell(9).value = product.status === 'sold' ? getPaymentType(product.paymentType) : '-';
+                row.getCell(10).value = formatDate(product.saleDate);
+                row.getCell(11).value = product.shipmentDate ? formatDate(product.shipmentDate) : '-';
+                row.getCell(12).value = product.expenses || 0;
+                row.getCell(13).value = product.isReturn ? 'Да' : 'Нет';
+                row.getCell(14).value = product.isReturn ? (product.returnAmount || 0) : 0;
+                row.getCell(15).value = product.paymentType === 'installment' ? 'Да' : 'Нет';
+
+                // Форматирование чисел
+                [6, 7, 12, 14].forEach(col => {
+                    const cell = row.getCell(col);
+                    cell.numFmt = '#,##0.00 "₽"';
+                });
+
+                // Цветовое выделение строк
+                if (product.status === 'sold') {
+                    row.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F5E9' }
+                    };
+                }
+                if (product.isReturn) {
+                    row.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFFF3E0' }
+                    };
+                }
+
+                // Границы
+                headers.forEach((_, idx) => {
+                    const cell = row.getCell(idx + 1);
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                    cell.alignment = { vertical: 'middle' };
+                });
+
+                row.height = 20;
+            });
+
+            // Автоматическая ширина колонок
+            worksheet.columns.forEach((column, index) => {
+                let maxLength = 10;
+                column.eachCell({ includeEmpty: true }, (cell) => {
+                    try {
+                        const value = cell.value ? cell.value.toString() : '';
+                        if (value.length > maxLength) {
+                            maxLength = value.length;
+                        }
+                    } catch (e) {}
+                });
+                column.width = Math.min(Math.max(maxLength + 2, 10), 30);
+            });
+
+            // Итоговая строка
+            const lastRow = 10 + this.products.length;
+            const summaryRow = worksheet.getRow(lastRow + 2);
+            summaryRow.getCell(1).value = 'ИТОГО:';
+            summaryRow.getCell(1).font = { bold: true, size: 12 };
+            summaryRow.getCell(6).value = { formula: `SUM(F10:F${lastRow})` };
+            summaryRow.getCell(7).value = { formula: `SUM(G10:G${lastRow})` };
+            summaryRow.getCell(12).value = { formula: `SUM(L10:L${lastRow})` };
+            summaryRow.getCell(14).value = { formula: `SUM(N10:N${lastRow})` };
+            
+            [6, 7, 12, 14].forEach(col => {
+                const cell = summaryRow.getCell(col);
+                cell.numFmt = '#,##0.00 "₽"';
+                cell.font = { bold: true };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFD4AF37' }
+                };
+            });
+
+            summaryRow.height = 25;
+
+            // Сохранение файла
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `jewelry_inventory_${new Date().toISOString().split('T')[0]}.xlsx`;
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Ошибка при экспорте в Excel:', error);
+            alert('Ошибка при экспорте в Excel. Убедитесь, что библиотека ExcelJS загружена.');
+        }
+    }
+
     // Import data
     importData(event) {
         const file = event.target.files[0];
@@ -1599,6 +1846,10 @@ function saveProduct() {
 
 function exportData() {
     app.exportData();
+}
+
+function exportToExcel() {
+    app.exportToExcel();
 }
 
 function importData(event) {
