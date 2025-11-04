@@ -297,7 +297,7 @@ class JewelryApp {
                             });
                         }
                         
-                        console.log(`Merged: ${merged.length} items (${remoteCount} remote + ${merged.length - remoteCount} local-only)`);
+                        console.log(`🔀 Объединено: ${merged.length} товаров (${remoteCount} с GitHub + ${merged.length - remoteCount} локальных)`);
                         
                         this.products = merged.map(item => ({
                             ...item,
@@ -305,27 +305,41 @@ class JewelryApp {
                             saleDate: item.saleDate || null
                         }));
                         
+                        console.log(`💾 Сохранение ${this.products.length} товаров в localStorage...`);
                         // Save merged data to localStorage
                         localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+                        console.log(`✅ Сохранено в localStorage`);
                         
                         // Force render - especially important on mobile
-                        setTimeout(() => {
-                            this.renderProducts();
-                            this.updateStatistics();
-                        }, 100);
-                        
-                        // Also render immediately
+                        console.log(`🖼️ Рендеринг товаров...`);
                         this.renderProducts();
                         this.updateStatistics();
                         
+                        // Double render after a bit for safety
+                        setTimeout(() => {
+                            console.log(`🖼️ Повторный рендеринг...`);
+                            this.renderProducts();
+                            this.updateStatistics();
+                        }, 200);
+                        
                         console.log(`✅ Данные загружены и отображены: ${merged.length} товаров`);
+                        console.log(`📊 Товары:`, this.products.map(p => `${p.name} (${p.id})`));
                         
                         // Уведомления отключены
                         // if (!silent) {
                         //     this.showSyncNotification(`✅ Загружено ${remoteCount} товаров с GitHub`, 'success');
                         // }
                         return true;
+                    } else {
+                        console.log(`⚠️ Remote data is empty array`);
                     }
+                } else {
+                    console.log(`⚠️ Remote data is not an array:`, typeof remoteData, remoteData);
+                }
+            } else {
+                console.log('⚠️ Gist file exists but has no content or file not found');
+                if (gist.files) {
+                    console.log('Gist files:', Object.keys(gist.files));
                 }
             }
         } catch (error) {
