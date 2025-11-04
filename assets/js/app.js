@@ -74,7 +74,14 @@ class JewelryApp {
                     this.products = parsed.map(item => ({
                         ...item,
                         date: item.date || new Date().toISOString().split('T')[0],
-                        saleDate: item.saleDate || null
+                        saleDate: item.saleDate || null,
+                        // Убеждаемся что новые поля есть
+                        shipmentDate: item.shipmentDate || null,
+                        shipmentAmount: item.shipmentAmount || 0,
+                        expenses: item.expenses || 0,
+                        isReturn: item.isReturn || false,
+                        returnDate: item.returnDate || null,
+                        returnAmount: item.returnAmount || 0
                     }));
                     console.log(`✅ Загружено ${this.products.length} товаров из localStorage`);
                 } else {
