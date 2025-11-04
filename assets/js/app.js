@@ -60,30 +60,43 @@ class JewelryApp {
     async loadData() {
         // First try to load from localStorage (fast)
         const localData = localStorage.getItem('jewelryProducts');
-        if (localData) {
-            this.products = JSON.parse(localData).map(item => ({
-                ...item,
-                date: item.date || new Date().toISOString().split('T')[0],
-                saleDate: item.saleDate || null
-            }));
+        const hasLocalData = localData && localData !== '[]' && localData !== 'null';
+        
+        if (hasLocalData) {
+            try {
+                const parsed = JSON.parse(localData);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    this.products = parsed.map(item => ({
+                        ...item,
+                        date: item.date || new Date().toISOString().split('T')[0],
+                        saleDate: item.saleDate || null
+                    }));
+                }
+            } catch (e) {
+                console.error('Error parsing local data:', e);
+            }
         }
 
-        // Render immediately with local data
+        // Render immediately with local data (if any)
         this.renderProducts();
         this.updateStatistics();
 
-        // If sync is enabled, try to load from GitHub in background (non-blocking)
-        // Only sync if we have local data OR if gistId exists (meaning sync was set up)
-        if (this.syncEnabled && this.githubToken && this.gistId) {
-            // Wait a bit for UI to render first
-            setTimeout(async () => {
-                // Only sync from GitHub if local data is empty OR if we want to merge
-                // If local has data, we'll merge intelligently in syncFromGitHub
-                await this.syncFromGitHub(true); // true = silent mode (no notification on load)
-            }, 1000); // Increased delay to ensure UI is fully rendered
-        } else if (this.syncEnabled && this.githubToken && !this.gistId) {
-            // Sync enabled but no gistId yet - create gist on first save
-            console.log('Sync enabled but no gistId yet, will create on first save');
+        // If sync is enabled, try to load from GitHub
+        if (this.syncEnabled && this.githubToken) {
+            if (this.gistId) {
+                // We have gistId, sync from GitHub
+                setTimeout(async () => {
+                    await this.syncFromGitHub(true); // true = silent mode
+                }, 500);
+            } else {
+                // No gistId yet - if no local data, try to find existing gist
+                // Otherwise, create gist on first save
+                if (!hasLocalData) {
+                    console.log('No local data and no gistId, will create gist on first save');
+                } else {
+                    console.log('Has local data but no gistId, will create gist on first save');
+                }
+            }
         }
     }
 
