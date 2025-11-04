@@ -143,13 +143,28 @@ class JewelryApp {
     async saveData() {
         const productsCount = this.products ? this.products.length : 0;
         console.log(`💾 saveData вызван: ${productsCount} товаров`);
+        console.log(`💾 Данные для сохранения:`, JSON.stringify(this.products).substring(0, 200));
         
-        localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+        // Проверка что products это массив
+        if (!Array.isArray(this.products)) {
+            console.error(`❌ ОШИБКА: this.products не массив! Тип: ${typeof this.products}`, this.products);
+            this.products = [];
+        }
+        
+        const dataToSave = JSON.stringify(this.products);
+        console.log(`💾 Данные для localStorage: ${dataToSave.length} символов`);
+        localStorage.setItem('jewelryProducts', dataToSave);
         console.log(`✅ Данные сохранены в localStorage: ${productsCount} товаров`);
+        
+        // Проверка что сохранилось
+        const saved = localStorage.getItem('jewelryProducts');
+        console.log(`✅ Проверка сохранения: ${saved ? saved.length : 0} символов`);
+        console.log(`✅ Проверка содержимого:`, saved);
         
         // Auto-sync to GitHub if enabled
         if (this.syncEnabled && this.githubToken) {
             console.log(`🔄 Синхронизация включена, отправка на GitHub...`);
+            console.log(`🔄 Текущие товары перед синхронизацией:`, this.products.length);
             await this.syncToGitHub();
         } else {
             console.log(`⚠️ Синхронизация выключена или нет токена (syncEnabled=${this.syncEnabled}, hasToken=${!!this.githubToken})`);
@@ -680,14 +695,26 @@ class JewelryApp {
         console.log(`📊 Всего товаров в массиве: ${this.products.length}`);
         console.log(`📦 Данные товара:`, productData);
 
+        // Проверка что товар действительно добавлен
+        console.log(`🔍 Проверка после добавления:`);
+        console.log(`  - Длина массива: ${this.products.length}`);
+        console.log(`  - Последний товар:`, this.products[this.products.length - 1]);
+        console.log(`  - Все товары:`, this.products);
+        
         // Render immediately (don't wait for save)
         this.renderProducts();
         this.updateStatistics();
         
-        // Save data (async, in background)
+        // Save data (async, but wait for it)
         console.log(`💾 Сохранение товара: ${this.products.length} товаров в списке`);
+        console.log(`💾 Товары перед сохранением:`, JSON.stringify(this.products));
+        
         this.saveData().then(() => {
             console.log(`✅ Данные сохранены: ${this.products.length} товаров`);
+            // Проверка что действительно сохранилось
+            const saved = localStorage.getItem('jewelryProducts');
+            const savedParsed = saved ? JSON.parse(saved) : [];
+            console.log(`✅ Проверка после сохранения: ${savedParsed.length} товаров в localStorage`);
         }).catch(err => {
             console.error('❌ Ошибка сохранения данных:', err);
         });
