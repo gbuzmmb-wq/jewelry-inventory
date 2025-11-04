@@ -986,6 +986,28 @@ class JewelryApp {
         // Также проверяем сразу
         const immediateRows = tbody.querySelectorAll('tr');
         console.log(`✅ Сразу после вставки: ${immediateRows.length} строк в таблице`);
+        
+        // Проверка видимости таблицы
+        const table = tbody.closest('table');
+        const tableContainer = table ? table.closest('.table-responsive') : null;
+        if (table) {
+            const tableStyle = window.getComputedStyle(table);
+            console.log(`✅ Таблица найдена, видимость: ${tableStyle.display}, opacity: ${tableStyle.opacity}`);
+            if (tableContainer) {
+                const containerStyle = window.getComputedStyle(tableContainer);
+                console.log(`✅ Контейнер таблицы: display=${containerStyle.display}, visibility=${containerStyle.visibility}`);
+            }
+        }
+        
+        // Проверка что no-products скрыт
+        if (noProducts) {
+            const noProductsStyle = window.getComputedStyle(noProducts);
+            console.log(`✅ no-products элемент: display=${noProductsStyle.display}`);
+            if (noProductsStyle.display !== 'none') {
+                console.warn(`⚠️ ВНИМАНИЕ: no-products видим, но товары есть!`);
+                noProducts.style.display = 'none';
+            }
+        }
 
         // Setup sorting after render
         this.setupTableSorting();
