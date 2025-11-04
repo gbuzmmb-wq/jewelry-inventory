@@ -643,12 +643,23 @@ class JewelryApp {
     setupModalListeners() {
         const modal = document.getElementById('productModal');
         const statusSelect = document.getElementById('product-status');
+        const isReturnCheckbox = document.getElementById('product-is-return');
 
         statusSelect.addEventListener('change', () => {
             const isSold = statusSelect.value === 'sold';
             document.getElementById('payment-type-container').style.display = isSold ? 'block' : 'none';
             document.getElementById('sale-date-container').style.display = isSold ? 'block' : 'none';
         });
+
+        // Показ/скрытие полей возврата
+        if (isReturnCheckbox) {
+            isReturnCheckbox.addEventListener('change', () => {
+                const returnContainer = document.getElementById('return-details-container');
+                if (returnContainer) {
+                    returnContainer.style.display = isReturnCheckbox.checked ? 'block' : 'none';
+                }
+            });
+        }
 
         modal.addEventListener('hidden.bs.modal', () => {
             this.resetForm();
@@ -712,6 +723,20 @@ class JewelryApp {
                 document.getElementById('product-status').value = product.status;
                 document.getElementById('product-payment-type').value = product.paymentType || 'cash';
                 document.getElementById('product-sale-date').value = product.saleDate || '';
+                
+                // Новые поля
+                document.getElementById('product-shipment-date').value = product.shipmentDate || '';
+                document.getElementById('product-shipment-amount').value = product.shipmentAmount || 0;
+                document.getElementById('product-expenses').value = product.expenses || 0;
+                document.getElementById('product-is-return').checked = product.isReturn || false;
+                document.getElementById('product-return-date').value = product.returnDate || '';
+                document.getElementById('product-return-amount').value = product.returnAmount || 0;
+                
+                // Показываем поля возврата если нужно
+                const returnContainer = document.getElementById('return-details-container');
+                if (returnContainer) {
+                    returnContainer.style.display = (product.isReturn) ? 'block' : 'none';
+                }
 
                 // Show payment type and sale date if sold
                 if (product.status === 'sold') {
@@ -742,6 +767,7 @@ class JewelryApp {
             return;
         }
 
+        const isReturn = document.getElementById('product-is-return')?.checked || false;
         const productData = {
             id: document.getElementById('product-id').value || this.generateId(),
             date: document.getElementById('product-date').value,
@@ -756,7 +782,14 @@ class JewelryApp {
                 : null,
             saleDate: document.getElementById('product-status').value === 'sold'
                 ? document.getElementById('product-sale-date').value
-                : null
+                : null,
+            // Новые поля
+            shipmentDate: document.getElementById('product-shipment-date')?.value || null,
+            shipmentAmount: parseFloat(document.getElementById('product-shipment-amount')?.value || 0),
+            expenses: parseFloat(document.getElementById('product-expenses')?.value || 0),
+            isReturn: isReturn,
+            returnDate: isReturn ? (document.getElementById('product-return-date')?.value || null) : null,
+            returnAmount: isReturn ? parseFloat(document.getElementById('product-return-amount')?.value || 0) : 0
         };
 
         if (this.currentEditId) {
@@ -882,6 +915,19 @@ class JewelryApp {
         this.currentEditId = null;
         document.getElementById('product-id').value = '';
         document.getElementById('product-date').value = new Date().toISOString().split('T')[0];
+        
+        // Сброс новых полей
+        const shipmentAmountEl = document.getElementById('product-shipment-amount');
+        const expensesEl = document.getElementById('product-expenses');
+        const isReturnEl = document.getElementById('product-is-return');
+        const returnAmountEl = document.getElementById('product-return-amount');
+        const returnContainer = document.getElementById('return-details-container');
+        
+        if (shipmentAmountEl) shipmentAmountEl.value = 0;
+        if (expensesEl) expensesEl.value = 0;
+        if (isReturnEl) isReturnEl.checked = false;
+        if (returnAmountEl) returnAmountEl.value = 0;
+        if (returnContainer) returnContainer.style.display = 'none';
     }
 
     // Render products table
@@ -932,6 +978,15 @@ class JewelryApp {
                     </td>
                     <td class="text-center">
                         ${isCardSale ? '<i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>' : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-center">
+                        ${product.shipmentDate ? `<small>${this.formatDate(product.shipmentDate)}</small><br><strong>${product.shipmentAmount > 0 ? product.shipmentAmount.toFixed(2) + ' ₽' : '-'}</strong>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-center">
+                        ${product.expenses > 0 ? `<strong class="text-danger">${product.expenses.toFixed(2)} ₽</strong>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-center">
+                        ${product.isReturn ? `<i class="bi bi-arrow-return-left text-warning" style="font-size: 1.5rem;" title="Возврат"></i><br><small>${product.returnDate ? this.formatDate(product.returnDate) : ''}</small><br><strong class="text-danger">${product.returnAmount > 0 ? product.returnAmount.toFixed(2) + ' ₽' : ''}</strong>` : '<span class="text-muted">-</span>'}
                     </td>
                     <td class="action-buttons">
                         ${!isSold ? `
@@ -1040,14 +1095,36 @@ class JewelryApp {
         const soldProducts = this.products.filter(p => p.status === 'sold').length;
         const inStock = totalProducts - soldProducts;
 
+        // Прибыль = продажная цена - закупочная цена - расходы - возвраты
         const totalProfit = this.products
             .filter(p => p.status === 'sold')
-            .reduce((sum, p) => sum + (p.sellingPrice - p.purchasePrice), 0);
+            .reduce((sum, p) => {
+                const profit = p.sellingPrice - p.purchasePrice;
+                const expenses = p.expenses || 0;
+                const returnAmount = (p.isReturn && p.returnAmount) ? p.returnAmount : 0;
+                return sum + profit - expenses - returnAmount;
+            }, 0);
+
+        // Статистика по отправкам
+        const totalShipments = this.products.filter(p => p.shipmentDate).length;
+        
+        // Общие расходы
+        const totalExpenses = this.products.reduce((sum, p) => sum + (p.expenses || 0), 0);
+        
+        // Статистика по возвратам
+        const totalReturns = this.products.filter(p => p.isReturn === true).length;
+        const totalReturnAmount = this.products
+            .filter(p => p.isReturn === true)
+            .reduce((sum, p) => sum + (p.returnAmount || 0), 0);
 
         document.getElementById('total-products').textContent = totalProducts;
         document.getElementById('sold-products').textContent = soldProducts;
         document.getElementById('in-stock').textContent = inStock;
         document.getElementById('total-profit').textContent = totalProfit.toFixed(2) + ' ₽';
+        document.getElementById('total-shipments').textContent = totalShipments;
+        document.getElementById('total-expenses').textContent = totalExpenses.toFixed(2) + ' ₽';
+        document.getElementById('total-returns').textContent = totalReturns;
+        document.getElementById('total-return-amount').textContent = totalReturnAmount.toFixed(2) + ' ₽';
     }
 
     // Generate unique ID

@@ -103,6 +103,60 @@
                     </div>
                 </div>
             </div>
+            <div class="row mb-3">
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Отправлено</h6>
+                                <h3 id="total-shipments">0</h3>
+                            </div>
+                            <div class="stats-icon bg-info">
+                                <i class="bi bi-send"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Расходы</h6>
+                                <h3 id="total-expenses">0 ₽</h3>
+                            </div>
+                            <div class="stats-icon bg-danger">
+                                <i class="bi bi-arrow-down-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Возвраты</h6>
+                                <h3 id="total-returns">0</h3>
+                            </div>
+                            <div class="stats-icon bg-warning">
+                                <i class="bi bi-arrow-return-left"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-2">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6>Сумма возвратов</h6>
+                                <h3 id="total-return-amount">0 ₽</h3>
+                            </div>
+                            <div class="stats-icon bg-danger">
+                                <i class="bi bi-x-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Search and Filters -->
             <div class="row mb-2">
@@ -114,6 +168,7 @@
                         <option value="all">Все</option>
                         <option value="in-stock">В наличии</option>
                         <option value="sold">Продано</option>
+                        <option value="returned">Возвраты</option>
                     </select>
                 </div>
                 <div class="col-md-6 col-12">
@@ -168,6 +223,9 @@
                                 <th>Продажная цена</th>
                                 <th>Продажа за наличку</th>
                                 <th>Продажа на карту</th>
+                                <th>Отправка</th>
+                                <th>Расходы</th>
+                                <th>Возврат</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -342,6 +400,37 @@
                         <div class="mb-3" id="sale-date-container" style="display: none;">
                             <label class="form-label">Дата продажи</label>
                             <input type="date" class="form-control" id="product-sale-date">
+                        </div>
+                        <hr class="my-4">
+                        <h6 class="mb-3"><i class="bi bi-box-seam me-2"></i>Дополнительная информация</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Дата отправки</label>
+                                <input type="date" class="form-control" id="product-shipment-date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Сумма отправки (₽)</label>
+                                <input type="number" class="form-control" id="product-shipment-amount" step="0.01" value="0">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Расходы (₽)</label>
+                                <input type="number" class="form-control" id="product-expenses" step="0.01" value="0">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Возврат</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="product-is-return">
+                                    <label class="form-check-label" for="product-is-return">
+                                        Товар возвращен
+                                    </label>
+                                </div>
+                                <div id="return-details-container" style="display: none;">
+                                    <input type="date" class="form-control mb-2" id="product-return-date" placeholder="Дата возврата">
+                                    <input type="number" class="form-control" id="product-return-amount" step="0.01" value="0" placeholder="Сумма возврата (₽)">
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
