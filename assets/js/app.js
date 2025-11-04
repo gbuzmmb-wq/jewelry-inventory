@@ -179,15 +179,27 @@ class JewelryApp {
         }
 
         try {
+            // Детальная проверка перед синхронизацией
+            console.log(`🔍 Проверка перед синхронизацией:`);
+            console.log(`  - this.products:`, this.products);
+            console.log(`  - Тип:`, typeof this.products);
+            console.log(`  - Это массив:`, Array.isArray(this.products));
+            console.log(`  - Длина:`, this.products ? this.products.length : 'null/undefined');
+            
             const productsCount = this.products ? this.products.length : 0;
             console.log(`📤 Синхронизация на GitHub: ${productsCount} товаров`);
             
             if (productsCount === 0) {
                 console.warn('⚠️ Нет данных для синхронизации (products пустой)');
-                // Но все равно отправляем, чтобы обновить gist
+                console.warn('⚠️ Проверка localStorage:', localStorage.getItem('jewelryProducts'));
+                // НЕ отправляем пустой массив - это перезапишет данные на GitHub
+                console.warn('⚠️ Пропускаю отправку пустого массива, чтобы не перезаписать данные на GitHub');
+                return false;
             }
 
             const data = JSON.stringify(this.products, null, 2);
+            console.log(`📤 Данные для отправки: ${data.length} символов`);
+            console.log(`📤 Первые 300 символов:`, data.substring(0, 300));
             const filename = 'jewelry-inventory.json';
             
             let gistData = {
