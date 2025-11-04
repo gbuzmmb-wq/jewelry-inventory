@@ -357,24 +357,35 @@ class JewelryApp {
                         }));
                         
                         console.log(`💾 Сохранение ${this.products.length} товаров в localStorage...`);
+                        console.log(`💾 Данные для сохранения:`, JSON.stringify(this.products));
                         // Save merged data to localStorage
                         localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
                         console.log(`✅ Сохранено в localStorage`);
                         
+                        // Проверка что сохранилось
+                        const checkSaved = localStorage.getItem('jewelryProducts');
+                        const checkParsed = checkSaved ? JSON.parse(checkSaved) : [];
+                        console.log(`✅ Проверка: ${checkParsed.length} товаров в localStorage`);
+                        console.log(`✅ Проверка содержимого:`, checkParsed);
+                        
                         // Force render - especially important on mobile
                         console.log(`🖼️ Рендеринг товаров...`);
+                        console.log(`🖼️ this.products перед рендером:`, this.products);
+                        console.log(`🖼️ this.products.length:`, this.products.length);
                         this.renderProducts();
                         this.updateStatistics();
                         
                         // Double render after a bit for safety
                         setTimeout(() => {
-                            console.log(`🖼️ Повторный рендеринг...`);
+                            console.log(`🖼️ Повторный рендеринг через 300мс...`);
+                            console.log(`🖼️ this.products перед повторным рендером:`, this.products);
+                            console.log(`🖼️ this.products.length:`, this.products.length);
                             this.renderProducts();
                             this.updateStatistics();
-                        }, 200);
+                        }, 300);
                         
                         console.log(`✅ Данные загружены и отображены: ${merged.length} товаров`);
-                        console.log(`📊 Товары:`, this.products.map(p => `${p.name} (${p.id})`));
+                        console.log(`📊 Товары после загрузки:`, this.products.map(p => `${p.name} (${p.id})`));
                         
                         // Уведомления отключены
                         // if (!silent) {
@@ -826,18 +837,33 @@ class JewelryApp {
 
     // Render products table
     renderProducts(products = this.products) {
+        console.log(`🖼️ renderProducts вызван с ${products.length} товарами`);
+        console.log(`🖼️ Товары для рендера:`, products);
+        
         const tbody = document.getElementById('products-tbody');
         const noProducts = document.getElementById('no-products');
 
+        if (!tbody) {
+            console.error('❌ tbody не найден!');
+            return;
+        }
+
         if (products.length === 0) {
+            console.log(`⚠️ Нет товаров для отображения, показываю пустое состояние`);
             tbody.innerHTML = '';
-            noProducts.style.display = 'block';
+            if (noProducts) {
+                noProducts.style.display = 'block';
+            }
             this.setupTableSorting();
             return;
         }
 
-        noProducts.style.display = 'none';
-        tbody.innerHTML = products.map((product, index) => {
+        console.log(`✅ Рендеринг ${products.length} товаров`);
+        if (noProducts) {
+            noProducts.style.display = 'none';
+        }
+        
+        const html = products.map((product, index) => {
             const profit = product.sellingPrice - product.purchasePrice;
             const isSold = product.status === 'sold';
             const isCashSale = isSold && product.paymentType === 'cash';
@@ -879,6 +905,22 @@ class JewelryApp {
                 </tr>
             `;
         }).join('');
+
+        console.log(`🖼️ Сгенерированный HTML: ${html.length} символов`);
+        console.log(`🖼️ Первые 500 символов HTML:`, html.substring(0, 500));
+        
+        tbody.innerHTML = html;
+        console.log(`✅ HTML вставлен в tbody`);
+        
+        // Проверка что товары действительно в DOM
+        const renderedRows = tbody.querySelectorAll('tr');
+        console.log(`✅ Отображено строк в таблице: ${renderedRows.length}`);
+        
+        if (renderedRows.length === 0 && products.length > 0) {
+            console.error(`❌ ОШИБКА: Товары не отображаются в таблице!`);
+            console.error(`❌ products.length: ${products.length}`);
+            console.error(`❌ tbody.innerHTML length: ${tbody.innerHTML.length}`);
+        }
 
         // Setup sorting after render
         this.setupTableSorting();
