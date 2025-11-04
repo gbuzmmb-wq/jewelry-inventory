@@ -916,6 +916,43 @@ class JewelryApp {
         }
     }
 
+    // Mark product as returned
+    markAsReturned(id) {
+        const product = this.products.find(p => p.id === id);
+        if (product && product.status === 'sold' && !product.isReturn) {
+            product.isReturn = true;
+            product.returnDate = new Date().toISOString().split('T')[0];
+            // Если сумма возврата не указана, устанавливаем равной продажной цене
+            if (!product.returnAmount || product.returnAmount === 0) {
+                product.returnAmount = product.sellingPrice;
+            }
+            this.saveData();
+            this.renderProducts();
+            this.updateStatistics();
+        }
+    }
+
+    // Revert returned status
+    revertReturnedStatus(id) {
+        const product = this.products.find(p => p.id === id);
+        if (product && product.isReturn) {
+            // Store action to execute
+            this.pendingConfirmAction = () => {
+                product.isReturn = false;
+                product.returnDate = null;
+                product.returnAmount = 0;
+                this.saveData();
+                this.renderProducts();
+                this.updateStatistics();
+            };
+
+            // Show confirm modal
+            document.getElementById('confirmMessage').textContent = 'Отменить возврат этого товара?';
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            modal.show();
+        }
+    }
+
     // Reset form
     resetForm() {
         document.getElementById('productForm').reset();
