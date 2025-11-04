@@ -208,68 +208,64 @@ class JewelryApp {
                 if (remoteData && Array.isArray(remoteData)) {
                     const localData = this.products;
                     
-                    // If remote is empty, keep local data (don't overwrite)
-                    if (remoteData.length === 0) {
-                        console.log('Remote data is empty, keeping local data');
+                    const localCount = localData ? localData.length : 0;
+                    const remoteCount = remoteData.length;
+                    
+                    console.log(`Sync: Local=${localCount}, Remote=${remoteCount}`);
+                    
+                    // If remote is empty AND local has data, keep local (don't overwrite)
+                    if (remoteCount === 0 && localCount > 0) {
+                        console.log('Remote is empty but local has data, keeping local');
                         return false; // Don't update, keep local
                     }
                     
-                    // If local has more items, prioritize local (might be newer)
-                    if (localData.length > remoteData.length) {
-                        console.log(`Local has more items (${localData.length} vs ${remoteData.length}), merging...`);
-                        // Merge: keep local items, add remote items not in local
-                        const localMap = new Map();
-                        localData.forEach(item => {
-                            localMap.set(item.id, item);
-                        });
+                    // If remote has data, merge intelligently
+                    if (remoteCount > 0) {
+                        // Create maps for efficient lookup
+                        const localMap = localData ? new Map() : null;
+                        if (localMap && localData) {
+                            localData.forEach(item => {
+                                localMap.set(item.id, item);
+                            });
+                        }
                         
-                        const merged = [...localData];
-                        remoteData.forEach(remoteItem => {
-                            if (!localMap.has(remoteItem.id)) {
-                                // Remote item not in local, add it
-                                merged.push(remoteItem);
-                            }
-                        });
-                        
-                        this.products = merged.map(item => ({
-                            ...item,
-                            date: item.date || new Date().toISOString().split('T')[0],
-                            saleDate: item.saleDate || null
-                        }));
-                    } else {
-                        // Remote has same or more items, merge intelligently
-                        // Create a map of remote items by ID
                         const remoteMap = new Map();
                         remoteData.forEach(item => {
                             remoteMap.set(item.id, item);
                         });
                         
-                        // Merge: remote takes priority, but keep local items not in remote
+                        // Merge strategy:
+                        // 1. Start with remote data (it's the source of truth from cloud)
+                        // 2. Add local items that don't exist in remote (new local additions)
                         const merged = [...remoteData];
-                        localData.forEach(localItem => {
-                            if (!remoteMap.has(localItem.id)) {
-                                // Local item not in remote, add it
-                                merged.push(localItem);
-                            }
-                        });
+                        if (localData && localData.length > 0) {
+                            localData.forEach(localItem => {
+                                if (!remoteMap.has(localItem.id)) {
+                                    // Local item not in remote, add it (might be new local addition)
+                                    merged.push(localItem);
+                                }
+                            });
+                        }
+                        
+                        console.log(`Merged: ${merged.length} items (${remoteCount} remote + ${merged.length - remoteCount} local-only)`);
                         
                         this.products = merged.map(item => ({
                             ...item,
                             date: item.date || new Date().toISOString().split('T')[0],
                             saleDate: item.saleDate || null
                         }));
+                        
+                        // Save merged data to localStorage
+                        localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+                        
+                        this.renderProducts();
+                        this.updateStatistics();
+                        
+                        if (!silent) {
+                            this.showSyncNotification(`✅ Загружено ${remoteCount} товаров с GitHub`, 'success');
+                        }
+                        return true;
                     }
-                    
-                    // Save merged data to localStorage
-                    localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
-                    
-                    this.renderProducts();
-                    this.updateStatistics();
-                    
-                    if (!silent) {
-                        this.showSyncNotification('✅ Данные загружены с GitHub', 'success');
-                    }
-                    return true;
                 }
             }
         } catch (error) {
