@@ -968,6 +968,7 @@ class JewelryApp {
         const html = products.map((product, index) => {
             const profit = product.sellingPrice - product.purchasePrice;
             const isSold = product.status === 'sold';
+            const isReturned = product.isReturn === true;
             const isCashSale = isSold && product.paymentType === 'cash';
             const isCardSale = isSold && product.paymentType === 'cashless';
 
@@ -996,13 +997,21 @@ class JewelryApp {
                         ${product.isReturn ? `<i class="bi bi-arrow-return-left text-warning" style="font-size: 1.5rem;" title="Возврат"></i><br><small>${product.returnDate ? this.formatDate(product.returnDate) : ''}</small><br><strong class="text-danger">${product.returnAmount > 0 ? product.returnAmount.toFixed(2) + ' ₽' : ''}</strong>` : '<span class="text-muted">-</span>'}
                     </td>
                     <td class="action-buttons">
-                        ${!isSold ? `
+                        ${!isSold && !isReturned ? `
                             <button class="btn btn-sm btn-success" onclick="app.markAsSold('${product.id}')" title="Отметить как проданный">
                                 <i class="bi bi-check-circle"></i>
                             </button>
                         ` : ''}
-                        ${isSold ? `
+                        ${isSold && !isReturned ? `
                             <button class="btn btn-sm btn-warning" onclick="app.revertSoldStatus('${product.id}')" title="Отменить продажу">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                            <button class="btn btn-sm btn-info" onclick="app.markAsReturned('${product.id}')" title="Отметить как возвращенный">
+                                <i class="bi bi-arrow-return-left"></i>
+                            </button>
+                        ` : ''}
+                        ${isReturned ? `
+                            <button class="btn btn-sm btn-warning" onclick="app.revertReturnedStatus('${product.id}')" title="Отменить возврат">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         ` : ''}
