@@ -85,9 +85,14 @@ class JewelryApp {
         if (this.syncEnabled && this.githubToken) {
             if (this.gistId) {
                 // We have gistId, sync from GitHub
-                setTimeout(async () => {
-                    await this.syncFromGitHub(true); // true = silent mode
-                }, 500);
+                // Load immediately, don't wait
+                this.syncFromGitHub(true).then(() => {
+                    // Force re-render after sync
+                    this.renderProducts();
+                    this.updateStatistics();
+                }).catch(err => {
+                    console.error('Sync error on load:', err);
+                });
             } else {
                 // No gistId yet - if no local data, try to find existing gist
                 // Otherwise, create gist on first save
@@ -164,11 +169,13 @@ class JewelryApp {
                 this.saveSyncSettings();
             }
 
-            this.showSyncNotification('✅ Данные синхронизированы с GitHub', 'success');
+            // Уведомления отключены
+            // this.showSyncNotification('✅ Данные синхронизированы с GitHub', 'success');
             return true;
         } catch (error) {
             console.error('Sync error:', error);
-            this.showSyncNotification('❌ Ошибка синхронизации: ' + error.message, 'danger');
+            // Уведомления отключены
+            // this.showSyncNotification('❌ Ошибка синхронизации: ' + error.message, 'danger');
             return false;
         }
     }
@@ -258,21 +265,32 @@ class JewelryApp {
                         // Save merged data to localStorage
                         localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
                         
+                        // Force render - especially important on mobile
+                        setTimeout(() => {
+                            this.renderProducts();
+                            this.updateStatistics();
+                        }, 100);
+                        
+                        // Also render immediately
                         this.renderProducts();
                         this.updateStatistics();
                         
-                        if (!silent) {
-                            this.showSyncNotification(`✅ Загружено ${remoteCount} товаров с GitHub`, 'success');
-                        }
+                        console.log(`✅ Данные загружены и отображены: ${merged.length} товаров`);
+                        
+                        // Уведомления отключены
+                        // if (!silent) {
+                        //     this.showSyncNotification(`✅ Загружено ${remoteCount} товаров с GitHub`, 'success');
+                        // }
                         return true;
                     }
                 }
             }
         } catch (error) {
             console.error('Sync from GitHub error:', error);
-            if (!silent) {
-                this.showSyncNotification('❌ Ошибка загрузки: ' + error.message, 'danger');
-            }
+            // Уведомления отключены
+            // if (!silent) {
+            //     this.showSyncNotification('❌ Ошибка загрузки: ' + error.message, 'danger');
+            // }
             return false;
         }
     }
@@ -392,10 +410,12 @@ class JewelryApp {
         // If enabled, sync immediately
         if (enabled && token) {
             this.syncToGitHub().then(() => {
-                this.showSyncNotification('✅ Синхронизация настроена и выполнена', 'success');
+                // Уведомления отключены
+                // this.showSyncNotification('✅ Синхронизация настроена и выполнена', 'success');
             });
         } else {
-            this.showSyncNotification('✅ Настройки синхронизации сохранены', 'info');
+            // Уведомления отключены
+            // this.showSyncNotification('✅ Настройки синхронизации сохранены', 'info');
         }
     }
 
@@ -407,7 +427,8 @@ class JewelryApp {
             return;
         }
 
-        this.showSyncNotification('🔄 Синхронизация...', 'info');
+        // Уведомления отключены
+        // this.showSyncNotification('🔄 Синхронизация...', 'info');
         
         // First sync to GitHub (upload)
         await this.syncToGitHub();
