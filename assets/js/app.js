@@ -116,9 +116,24 @@ class JewelryApp {
                     console.log(`📊 Локальные данные есть (${this.products.length} товаров), синхронизация в фоне...`);
                     // Sync in background to merge, but don't overwrite local data
                     setTimeout(() => {
-                        this.syncFromGitHub(true).then(() => {
+                        console.log(`🔄 Начинаю синхронизацию в фоне...`);
+                        this.syncFromGitHub(true).then((result) => {
+                            console.log(`🔄 Синхронизация завершена, результат: ${result}`);
+                            console.log(`🔄 Товаров после синхронизации: ${this.products.length}`);
+                            console.log(`🔄 Вызываю renderProducts...`);
                             this.renderProducts();
                             this.updateStatistics();
+                            
+                            // Проверка что товары отобразились
+                            setTimeout(() => {
+                                const tbody = document.getElementById('products-tbody');
+                                if (tbody) {
+                                    const rows = tbody.querySelectorAll('tr');
+                                    console.log(`✅ Проверка после фоновой синхронизации: ${rows.length} строк в таблице`);
+                                }
+                            }, 200);
+                        }).catch(err => {
+                            console.error('Ошибка фоновой синхронизации:', err);
                         });
                     }, 1000);
                 }
