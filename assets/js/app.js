@@ -529,9 +529,15 @@ class JewelryApp {
             this.products.push(productData);
         }
 
-        this.saveData();
+        // Render immediately (don't wait for save)
         this.renderProducts();
         this.updateStatistics();
+        
+        // Save data (async, in background)
+        this.saveData().catch(err => {
+            console.error('Error saving data:', err);
+        });
+
         this.resetForm();
 
         // Close modal
