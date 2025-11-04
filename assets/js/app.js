@@ -1437,7 +1437,7 @@ class JewelryApp {
             const worksheet = workbook.addWorksheet('Товары');
 
             // Заголовок отчета
-            worksheet.mergeCells('A1:L1');
+            worksheet.mergeCells('A1:O1');
             const titleCell = worksheet.getCell('A1');
             titleCell.value = 'Ювелирный учет - Отчет по товарам';
             titleCell.font = { size: 16, bold: true, color: { argb: 'FF8B6F47' } };
@@ -1450,7 +1450,7 @@ class JewelryApp {
             worksheet.getRow(1).height = 30;
 
             // Дата отчета
-            worksheet.mergeCells('A2:L2');
+            worksheet.mergeCells('A2:O2');
             const dateCell = worksheet.getCell('A2');
             dateCell.value = `Дата отчета: ${new Date().toLocaleDateString('ru-RU', { 
                 year: 'numeric', 
@@ -1483,7 +1483,7 @@ class JewelryApp {
                 .filter(p => p.status === 'sold' && p.paymentType === 'installment')
                 .reduce((sum, p) => sum + (p.sellingPrice || 0), 0);
 
-            worksheet.mergeCells('A4:L4');
+            worksheet.mergeCells('A4:O4');
             const statsTitle = worksheet.getCell('A4');
             statsTitle.value = 'Статистика';
             statsTitle.font = { size: 14, bold: true };
