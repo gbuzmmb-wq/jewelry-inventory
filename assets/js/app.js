@@ -953,15 +953,31 @@ class JewelryApp {
         tbody.innerHTML = html;
         console.log(`✅ HTML вставлен в tbody`);
         
-        // Проверка что товары действительно в DOM
-        const renderedRows = tbody.querySelectorAll('tr');
-        console.log(`✅ Отображено строк в таблице: ${renderedRows.length}`);
+        // Проверка что товары действительно в DOM - сразу и через небольшую задержку
+        setTimeout(() => {
+            const renderedRows = tbody.querySelectorAll('tr');
+            console.log(`✅ Проверка DOM: ${renderedRows.length} строк в таблице`);
+            
+            if (renderedRows.length === 0 && products.length > 0) {
+                console.error(`❌ КРИТИЧЕСКАЯ ОШИБКА: Товары не отображаются в таблице!`);
+                console.error(`❌ products.length: ${products.length}`);
+                console.error(`❌ tbody.innerHTML length: ${tbody.innerHTML.length}`);
+                console.error(`❌ tbody.innerHTML:`, tbody.innerHTML.substring(0, 500));
+                console.error(`❌ tbody element:`, tbody);
+                
+                // Попытка принудительного рендера
+                console.log(`🔄 Попытка принудительного рендера...`);
+                tbody.innerHTML = html; // Повторная вставка
+                const retryRows = tbody.querySelectorAll('tr');
+                console.log(`🔄 После повторной вставки: ${retryRows.length} строк`);
+            } else if (renderedRows.length > 0) {
+                console.log(`✅ Товары успешно отображены! ${renderedRows.length} строк`);
+            }
+        }, 100);
         
-        if (renderedRows.length === 0 && products.length > 0) {
-            console.error(`❌ ОШИБКА: Товары не отображаются в таблице!`);
-            console.error(`❌ products.length: ${products.length}`);
-            console.error(`❌ tbody.innerHTML length: ${tbody.innerHTML.length}`);
-        }
+        // Также проверяем сразу
+        const immediateRows = tbody.querySelectorAll('tr');
+        console.log(`✅ Сразу после вставки: ${immediateRows.length} строк в таблице`);
 
         // Setup sorting after render
         this.setupTableSorting();
