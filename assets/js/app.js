@@ -8,10 +8,14 @@ class JewelryApp {
         this.charts = {};
         this.pendingSaleId = null; // Store product ID waiting for payment type
         this.pendingConfirmAction = null; // Store function to execute on confirm
+        this.githubToken = null; // GitHub token for sync
+        this.gistId = null; // Gist ID for storing data
+        this.syncEnabled = false; // Is sync enabled
         this.init();
     }
 
     init() {
+        this.loadSyncSettings();
         this.loadData();
         this.setupEventListeners();
         this.renderProducts();
@@ -20,23 +24,283 @@ class JewelryApp {
         this.initCharts();
         this.setupModalListeners();
         this.setupTableSorting();
+        this.checkSyncOnLoad();
     }
 
-    // Load data from localStorage
-    loadData() {
-        const data = localStorage.getItem('jewelryProducts');
-        if (data) {
-            this.products = JSON.parse(data).map(item => ({
+    // Load sync settings
+    loadSyncSettings() {
+        this.githubToken = localStorage.getItem('githubToken');
+        this.gistId = localStorage.getItem('gistId');
+        this.syncEnabled = localStorage.getItem('syncEnabled') === 'true';
+        
+        // Auto-setup with provided token if not configured
+        if (!this.githubToken && !this.syncEnabled) {
+            // Try to use token from URL parameter (if provided for initial setup)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenParam = urlParams.get('token');
+            if (tokenParam) {
+                this.githubToken = tokenParam;
+                this.syncEnabled = true;
+                this.saveSyncSettings();
+                // Remove token from URL for security
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    }
+
+    // Save sync settings
+    saveSyncSettings() {
+        if (this.githubToken) {
+            localStorage.setItem('githubToken', this.githubToken);
+        }
+        if (this.gistId) {
+            localStorage.setItem('gistId', this.gistId);
+        }
+        localStorage.setItem('syncEnabled', this.syncEnabled.toString());
+    }
+
+    // Load data from localStorage or GitHub
+    async loadData() {
+        // First try to load from localStorage (fast)
+        const localData = localStorage.getItem('jewelryProducts');
+        if (localData) {
+            this.products = JSON.parse(localData).map(item => ({
                 ...item,
                 date: item.date || new Date().toISOString().split('T')[0],
                 saleDate: item.saleDate || null
             }));
         }
+
+        // If sync is enabled, try to load from GitHub
+        if (this.syncEnabled && this.githubToken) {
+            await this.syncFromGitHub();
+        }
     }
 
-    // Save data to localStorage
-    saveData() {
+    // Check sync on page load
+    async checkSyncOnLoad() {
+        if (this.syncEnabled && this.githubToken) {
+            await this.syncFromGitHub();
+        }
+    }
+
+    // Save data to localStorage and optionally to GitHub
+    async saveData() {
         localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+        
+        // Auto-sync to GitHub if enabled
+        if (this.syncEnabled && this.githubToken) {
+            await this.syncToGitHub();
+        }
+    }
+
+    // Sync to GitHub Gist
+    async syncToGitHub() {
+        if (!this.githubToken) {
+            console.error('GitHub token not set');
+            return false;
+        }
+
+        try {
+            const data = JSON.stringify(this.products, null, 2);
+            const filename = 'jewelry-inventory.json';
+            
+            let gistData = {
+                description: 'Ювелирный учет - синхронизация данных',
+                public: false,
+                files: {
+                    [filename]: {
+                        content: data
+                    }
+                }
+            };
+
+            const url = this.gistId 
+                ? `https://api.github.com/gists/${this.gistId}`
+                : 'https://api.github.com/gists';
+            
+            const method = this.gistId ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `token ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gistData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            // Save Gist ID if this is first time
+            if (!this.gistId && result.id) {
+                this.gistId = result.id;
+                this.saveSyncSettings();
+            }
+
+            this.showSyncNotification('✅ Данные синхронизированы с GitHub', 'success');
+            return true;
+        } catch (error) {
+            console.error('Sync error:', error);
+            this.showSyncNotification('❌ Ошибка синхронизации: ' + error.message, 'danger');
+            return false;
+        }
+    }
+
+    // Sync from GitHub Gist
+    async syncFromGitHub() {
+        if (!this.githubToken || !this.gistId) {
+            return false;
+        }
+
+        try {
+            const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                headers: {
+                    'Authorization': `token ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+
+            const gist = await response.json();
+            const filename = 'jewelry-inventory.json';
+            const file = gist.files[filename];
+
+            if (file && file.content) {
+                const remoteData = JSON.parse(file.content);
+                
+                // Merge with local data (remote takes priority)
+                if (remoteData && Array.isArray(remoteData) && remoteData.length > 0) {
+                    this.products = remoteData.map(item => ({
+                        ...item,
+                        date: item.date || new Date().toISOString().split('T')[0],
+                        saleDate: item.saleDate || null
+                    }));
+                    
+                    // Save merged data to localStorage
+                    localStorage.setItem('jewelryProducts', JSON.stringify(this.products));
+                    
+                    this.renderProducts();
+                    this.updateStatistics();
+                    this.showSyncNotification('✅ Данные загружены с GitHub', 'success');
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.error('Sync from GitHub error:', error);
+            // Don't show error on load, only on manual sync
+            return false;
+        }
+    }
+
+    // Show sync notification
+    showSyncNotification(message, type = 'info') {
+        // Remove existing notification
+        const existing = document.getElementById('sync-notification');
+        if (existing) {
+            existing.remove();
+        }
+
+        const notification = document.createElement('div');
+        notification.id = 'sync-notification';
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    // Open sync settings modal
+    openSyncSettings() {
+        const modalElement = document.getElementById('syncModal');
+        if (!modalElement) {
+            console.error('Sync modal not found');
+            return;
+        }
+
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
+        }
+
+        // Fill form with current settings
+        document.getElementById('sync-token').value = this.githubToken || '';
+        document.getElementById('sync-enabled').checked = this.syncEnabled;
+
+        // Show status
+        const statusEl = document.getElementById('sync-status');
+        if (this.syncEnabled && this.githubToken) {
+            statusEl.innerHTML = '<span class="badge bg-success">Синхронизация включена</span>';
+        } else {
+            statusEl.innerHTML = '<span class="badge bg-secondary">Синхронизация выключена</span>';
+        }
+
+        modal.show();
+    }
+
+    // Save sync settings
+    saveSyncSettingsFromForm() {
+        const token = document.getElementById('sync-token').value.trim();
+        const enabled = document.getElementById('sync-enabled').checked;
+
+        if (enabled && !token) {
+            alert('Введите GitHub токен для включения синхронизации!');
+            return;
+        }
+
+        this.githubToken = token || null;
+        this.syncEnabled = enabled;
+        this.saveSyncSettings();
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('syncModal'));
+        modal.hide();
+
+        // If enabled, sync immediately
+        if (enabled && token) {
+            this.syncToGitHub().then(() => {
+                this.showSyncNotification('✅ Синхронизация настроена и выполнена', 'success');
+            });
+        } else {
+            this.showSyncNotification('✅ Настройки синхронизации сохранены', 'info');
+        }
+    }
+
+    // Manual sync
+    async manualSync() {
+        if (!this.syncEnabled || !this.githubToken) {
+            alert('Сначала включите синхронизацию в настройках!');
+            this.openSyncSettings();
+            return;
+        }
+
+        this.showSyncNotification('🔄 Синхронизация...', 'info');
+        
+        // First sync to GitHub (upload)
+        await this.syncToGitHub();
+        
+        // Then sync from GitHub (download)
+        await this.syncFromGitHub();
+        
+        this.renderProducts();
+        this.updateStatistics();
     }
 
     // Setup event listeners

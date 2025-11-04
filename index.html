@@ -129,6 +129,13 @@
                                 <i class="bi bi-gear"></i> <span class="d-none d-md-inline ms-1">Настройки</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="app.manualSync()">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Синхронизировать
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="app.openSyncSettings()">
+                                    <i class="bi bi-cloud-arrow-up me-2"></i>Настройки синхронизации
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#" onclick="document.getElementById('import-input').click()">
                                     <i class="bi bi-upload me-2"></i>Импорт данных
                                 </a></li>
@@ -341,6 +348,53 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button type="button" class="btn btn-primary" onclick="saveProduct()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Settings Modal -->
+    <div class="modal fade" id="syncModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-cloud-arrow-up me-2"></i>Настройки синхронизации
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Статус синхронизации</label>
+                        <div id="sync-status" class="mb-2">
+                            <span class="badge bg-secondary">Не настроено</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">GitHub Personal Access Token</label>
+                        <input type="password" class="form-control" id="sync-token" 
+                               placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        <small class="form-text text-muted">
+                            Токен нужен для синхронизации данных между устройствами через GitHub Gists.
+                            <br>Создайте токен: <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Developer settings → Personal access tokens</a>
+                            <br>Нужны права: <code>gist</code>
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sync-enabled">
+                            <label class="form-check-label" for="sync-enabled">
+                                Включить автоматическую синхронизацию
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            При включении данные будут автоматически синхронизироваться при каждом сохранении
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="app.saveSyncSettingsFromForm()">Сохранить</button>
                 </div>
             </div>
         </div>

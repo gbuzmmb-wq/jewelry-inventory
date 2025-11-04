@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройка синхронизации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Настройка синхронизации</h1>
+        <p>Нажмите кнопку ниже, чтобы автоматически настроить синхронизацию с вашим GitHub токеном.</p>
+        <button onclick="setupSync()">Настроить синхронизацию</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function setupSync() {
+            const token = prompt('Введите ваш GitHub токен:');
+            if (!token || token.trim() === '') {
+                alert('Токен не введен!');
+                return;
+            }
+            
+            localStorage.setItem('githubToken', token.trim());
+            localStorage.setItem('syncEnabled', 'true');
+            
+            document.getElementById('result').innerHTML = 
+                '<p class="success">✅ Синхронизация настроена!</p>' +
+                '<p>Теперь откройте главную страницу приложения. Данные будут синхронизироваться автоматически.</p>' +
+                '<p><a href="index.html">Перейти к приложению</a></p>';
+        }
+    </script>
+</body>
+</html>
+
