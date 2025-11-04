@@ -1182,6 +1182,11 @@ class JewelryApp {
             .filter(p => p.isReturn === true)
             .reduce((sum, p) => sum + (p.returnAmount || 0), 0);
 
+        // Статистика по рассрочке
+        const installmentProducts = this.products.filter(p => p.status === 'sold' && p.paymentType === 'installment');
+        const installmentCount = installmentProducts.length;
+        const installmentAmount = installmentProducts.reduce((sum, p) => sum + (p.sellingPrice || 0), 0);
+
         document.getElementById('total-products').textContent = totalProducts;
         document.getElementById('sold-products').textContent = soldProducts;
         document.getElementById('in-stock').textContent = inStock;
@@ -1190,6 +1195,8 @@ class JewelryApp {
         document.getElementById('total-expenses').textContent = totalExpenses.toFixed(2) + ' ₽';
         document.getElementById('total-returns').textContent = totalReturns;
         document.getElementById('total-return-amount').textContent = totalReturnAmount.toFixed(2) + ' ₽';
+        document.getElementById('installment-count').textContent = installmentCount;
+        document.getElementById('installment-amount').textContent = installmentAmount.toFixed(2) + ' ₽';
     }
 
     // Generate unique ID
