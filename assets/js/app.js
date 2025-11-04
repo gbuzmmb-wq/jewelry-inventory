@@ -372,17 +372,43 @@ class JewelryApp {
                         console.log(`🖼️ Рендеринг товаров...`);
                         console.log(`🖼️ this.products перед рендером:`, this.products);
                         console.log(`🖼️ this.products.length:`, this.products.length);
-                        this.renderProducts();
-                        this.updateStatistics();
+                        
+                        // Убедимся что данные точно есть перед рендером
+                        if (this.products && this.products.length > 0) {
+                            console.log(`✅ Вызываю renderProducts с ${this.products.length} товарами`);
+                            this.renderProducts();
+                            this.updateStatistics();
+                        } else {
+                            console.error(`❌ ОШИБКА: this.products пустой перед рендером!`);
+                        }
                         
                         // Double render after a bit for safety
                         setTimeout(() => {
-                            console.log(`🖼️ Повторный рендеринг через 300мс...`);
+                            console.log(`🖼️ Повторный рендеринг через 500мс...`);
                             console.log(`🖼️ this.products перед повторным рендером:`, this.products);
                             console.log(`🖼️ this.products.length:`, this.products.length);
-                            this.renderProducts();
-                            this.updateStatistics();
-                        }, 300);
+                            
+                            if (this.products && this.products.length > 0) {
+                                console.log(`✅ Вызываю renderProducts повторно с ${this.products.length} товарами`);
+                                this.renderProducts();
+                                this.updateStatistics();
+                                
+                                // Проверка что товары отобразились
+                                const tbody = document.getElementById('products-tbody');
+                                if (tbody) {
+                                    const rows = tbody.querySelectorAll('tr');
+                                    console.log(`✅ Проверка: ${rows.length} строк в таблице после рендера`);
+                                    
+                                    if (rows.length === 0) {
+                                        console.error(`❌ КРИТИЧЕСКАЯ ОШИБКА: Товары не отображаются!`);
+                                        console.error(`❌ this.products:`, this.products);
+                                        console.error(`❌ tbody.innerHTML length:`, tbody.innerHTML.length);
+                                    }
+                                }
+                            } else {
+                                console.error(`❌ ОШИБКА: this.products пустой при повторном рендере!`);
+                            }
+                        }, 500);
                         
                         console.log(`✅ Данные загружены и отображены: ${merged.length} товаров`);
                         console.log(`📊 Товары после загрузки:`, this.products.map(p => `${p.name} (${p.id})`));
