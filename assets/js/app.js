@@ -229,30 +229,70 @@ class JewelryApp {
 
     // Open sync settings modal
     openSyncSettings() {
-        const modalElement = document.getElementById('syncModal');
-        if (!modalElement) {
-            console.error('Sync modal not found');
-            return;
+        try {
+            // Close dropdown menu first
+            const dropdown = document.querySelector('.dropdown-menu.show');
+            if (dropdown) {
+                const dropdownInstance = bootstrap.Dropdown.getInstance(dropdown.previousElementSibling || dropdown.parentElement);
+                if (dropdownInstance) {
+                    dropdownInstance.hide();
+                }
+            }
+
+            const modalElement = document.getElementById('syncModal');
+            if (!modalElement) {
+                console.error('Sync modal not found');
+                alert('Ошибка: Модальное окно не найдено. Обновите страницу.');
+                return;
+            }
+
+            // Fill form with current settings
+            const tokenInput = document.getElementById('sync-token');
+            const enabledCheckbox = document.getElementById('sync-enabled');
+            
+            if (tokenInput) {
+                tokenInput.value = this.githubToken || '';
+            } else {
+                console.error('sync-token input not found');
+            }
+            
+            if (enabledCheckbox) {
+                enabledCheckbox.checked = this.syncEnabled;
+            } else {
+                console.error('sync-enabled checkbox not found');
+            }
+
+            // Show status
+            const statusEl = document.getElementById('sync-status');
+            if (statusEl) {
+                if (this.syncEnabled && this.githubToken) {
+                    statusEl.innerHTML = '<span class="badge bg-success">Синхронизация включена</span>';
+                } else {
+                    statusEl.innerHTML = '<span class="badge bg-secondary">Синхронизация выключена</span>';
+                }
+            }
+
+            // Show modal - wait a bit for dropdown to close
+            setTimeout(() => {
+                try {
+                    let modal = bootstrap.Modal.getInstance(modalElement);
+                    if (!modal) {
+                        modal = new bootstrap.Modal(modalElement, {
+                            backdrop: true,
+                            keyboard: true,
+                            focus: true
+                        });
+                    }
+                    modal.show();
+                } catch (modalError) {
+                    console.error('Modal error:', modalError);
+                    alert('Ошибка при открытии модального окна: ' + modalError.message);
+                }
+            }, 150);
+        } catch (error) {
+            console.error('Error opening sync settings:', error);
+            alert('Ошибка при открытии настроек синхронизации: ' + error.message);
         }
-
-        let modal = bootstrap.Modal.getInstance(modalElement);
-        if (!modal) {
-            modal = new bootstrap.Modal(modalElement);
-        }
-
-        // Fill form with current settings
-        document.getElementById('sync-token').value = this.githubToken || '';
-        document.getElementById('sync-enabled').checked = this.syncEnabled;
-
-        // Show status
-        const statusEl = document.getElementById('sync-status');
-        if (this.syncEnabled && this.githubToken) {
-            statusEl.innerHTML = '<span class="badge bg-success">Синхронизация включена</span>';
-        } else {
-            statusEl.innerHTML = '<span class="badge bg-secondary">Синхронизация выключена</span>';
-        }
-
-        modal.show();
     }
 
     // Save sync settings

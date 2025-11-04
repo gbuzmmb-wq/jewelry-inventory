@@ -132,7 +132,7 @@
                                 <li><a class="dropdown-item" href="#" onclick="app.manualSync()">
                                     <i class="bi bi-arrow-repeat me-2"></i>Синхронизировать
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="app.openSyncSettings()">
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); event.stopPropagation(); setTimeout(function(){ if (typeof app !== 'undefined' && app) { app.openSyncSettings(); } else { alert('Приложение еще загружается, подождите секунду'); } }, 100);">
                                     <i class="bi bi-cloud-arrow-up me-2"></i>Настройки синхронизации
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
