@@ -60,21 +60,35 @@ class JewelryApp {
     async loadData() {
         // First try to load from localStorage (fast)
         const localData = localStorage.getItem('jewelryProducts');
-        const hasLocalData = localData && localData !== '[]' && localData !== 'null';
+        console.log(`📂 Загрузка из localStorage:`, localData ? `${localData.length} символов` : 'пусто');
+        console.log(`📂 Содержимое:`, localData);
+        
+        const hasLocalData = localData && localData !== '[]' && localData !== 'null' && localData.trim() !== '';
         
         if (hasLocalData) {
             try {
                 const parsed = JSON.parse(localData);
+                console.log(`📂 Парсинг localStorage:`, typeof parsed, Array.isArray(parsed) ? `массив длиной ${parsed.length}` : 'не массив');
+                
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     this.products = parsed.map(item => ({
                         ...item,
                         date: item.date || new Date().toISOString().split('T')[0],
                         saleDate: item.saleDate || null
                     }));
+                    console.log(`✅ Загружено ${this.products.length} товаров из localStorage`);
+                } else {
+                    console.log(`⚠️ localStorage содержит пустой массив или не массив`);
+                    this.products = [];
                 }
             } catch (e) {
-                console.error('Error parsing local data:', e);
+                console.error('❌ Ошибка парсинга localStorage:', e);
+                console.error('❌ Содержимое:', localData);
+                this.products = [];
             }
+        } else {
+            console.log(`⚠️ localStorage пустой или содержит пустой массив`);
+            this.products = [];
         }
 
         // Render immediately with local data (if any)
@@ -250,8 +264,18 @@ class JewelryApp {
             if (file && file.content) {
                 console.log(`📥 Получены данные с GitHub, размер: ${file.content.length} символов`);
                 console.log(`📥 Первые 200 символов: ${file.content.substring(0, 200)}`);
+                console.log(`📥 Полное содержимое:`, file.content);
                 
-                const remoteData = JSON.parse(file.content);
+                let remoteData;
+                try {
+                    remoteData = JSON.parse(file.content);
+                    console.log(`📥 Парсинг успешен, тип:`, typeof remoteData, Array.isArray(remoteData) ? 'массив' : 'не массив');
+                    console.log(`📥 Длина массива:`, Array.isArray(remoteData) ? remoteData.length : 'не массив');
+                } catch (parseError) {
+                    console.error(`❌ Ошибка парсинга JSON:`, parseError);
+                    console.error(`❌ Содержимое:`, file.content);
+                    return false;
+                }
                 
                 // Smart merge: use remote data if it's newer or has more items
                 if (remoteData && Array.isArray(remoteData)) {
